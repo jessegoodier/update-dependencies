@@ -1,0 +1,188 @@
+name: Update dependencies
+description: Update Python dependencies, GitHub Actions, Docker digests, and pre-commit hooks.
+author: Jesse Goodier
+branding:
+  icon: refresh-cw
+  color: blue
+inputs:
+  directory:
+    description: Repository directory, relative to the caller working directory
+    required: false
+    default: .
+  config:
+    description: Configuration path, relative to directory
+    required: false
+    default: ''
+  no-config:
+    description: Disable config discovery (true or false)
+    required: false
+    default: ''
+  ecosystems:
+    description: Comma-separated python,actions,docker,hooks
+    required: false
+    default: ''
+  dry-run:
+    description: Preview without editing target files (true or false)
+    required: false
+    default: ''
+  check:
+    description: Exit 1 if updates are available (true or false)
+    required: false
+    default: ''
+  allow-major:
+    description: Allow major upgrades (true or false)
+    required: false
+    default: ''
+  min-age:
+    description: Minimum release age in hours
+    required: false
+    default: ''
+  stale-days:
+    description: Informational maintenance age threshold in days
+    required: false
+    default: ''
+  python-inline-scripts:
+    description: Update PEP 723 scripts (true or false)
+    required: false
+    default: ''
+  python-add-minimums:
+    description: Add floors to bare requirements (true or false)
+    required: false
+    default: ''
+  python-update-build-backend:
+    description: Raise uv_build floor independently (true or false)
+    required: false
+    default: ''
+  sync:
+    description: Install target Python environment after applying updates (true or false)
+    required: false
+    default: ''
+  docker-pin-latest:
+    description: Pin latest or untagged images (true or false)
+    required: false
+    default: ''
+  include:
+    description: Newline-separated include globs
+    required: false
+    default: ''
+  exclude:
+    description: Newline-separated exclude globs
+    required: false
+    default: ''
+  timeout:
+    description: Timeout in seconds per external command
+    required: false
+    default: ''
+  retries:
+    description: Retries for transient read-only lookups
+    required: false
+    default: ''
+  progress:
+    description: 'Progress on stderr: auto, plain, or off; empty inherits configuration'
+    required: false
+    default: ''
+  format:
+    description: 'Console output format: text or json'
+    required: false
+    default: text
+  output:
+    description: JSON report path; default is RUNNER_TEMP/update-dependencies-report.json
+    required: false
+    default: ''
+outputs:
+  changed:
+    description: Whether files would change
+    value: ${{ steps.update.outputs.changed }}
+  change-count:
+    description: Number of changed files
+    value: ${{ steps.update.outputs.change-count }}
+  changed-files:
+    description: JSON array of changed paths
+    value: ${{ steps.update.outputs.changed-files }}
+  report-path:
+    description: Absolute path to the JSON report
+    value: ${{ steps.update.outputs.report-path }}
+runs:
+  using: composite
+  steps:
+  - name: Require Linux
+    shell: bash
+    run: if [ "$RUNNER_OS" != "Linux" ]; then echo "This action currently supports Linux runners." >&2; exit 2;
+      fi
+  - name: Set up uv and Python 3.14
+    uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2
+    with:
+      version: 0.13.6
+      python-version: '3.14'
+      enable-cache: 'false'
+  - name: Install updater from this Action revision
+    shell: bash
+    env:
+      UD_ACTION_PATH: ${{ github.action_path }}
+    run: 'UD_TOOL_ENV="$(mktemp -d "$RUNNER_TEMP/update-dependencies-tool.XXXXXX")"
+
+      export UV_PROJECT_ENVIRONMENT="$UD_TOOL_ENV"
+
+      uv sync --locked --no-dev --project "$UD_ACTION_PATH"
+
+      printf "tool-env=%s\n" "$UD_TOOL_ENV" >> "$GITHUB_OUTPUT"
+
+      '
+    id: install
+  - name: Read effective configuration
+    id: prepare
+    shell: bash
+    env:
+      UD_DIRECTORY: ${{ inputs.directory }}
+      UD_CONFIG: ${{ inputs.config }}
+      UD_NO_CONFIG: ${{ inputs.no-config }}
+      UD_ECOSYSTEMS: ${{ inputs.ecosystems }}
+      UD_DRY_RUN: ${{ inputs.dry-run }}
+      UD_CHECK: ${{ inputs.check }}
+      UD_ALLOW_MAJOR: ${{ inputs.allow-major }}
+      UD_MIN_AGE: ${{ inputs.min-age }}
+      UD_STALE_DAYS: ${{ inputs.stale-days }}
+      UD_PYTHON_INLINE_SCRIPTS: ${{ inputs.python-inline-scripts }}
+      UD_PYTHON_ADD_MINIMUMS: ${{ inputs.python-add-minimums }}
+      UD_PYTHON_UPDATE_BUILD_BACKEND: ${{ inputs.python-update-build-backend }}
+      UD_SYNC: ${{ inputs.sync }}
+      UD_DOCKER_PIN_LATEST: ${{ inputs.docker-pin-latest }}
+      UD_INCLUDE: ${{ inputs.include }}
+      UD_EXCLUDE: ${{ inputs.exclude }}
+      UD_TIMEOUT: ${{ inputs.timeout }}
+      UD_RETRIES: ${{ inputs.retries }}
+      UD_PROGRESS: ${{ inputs.progress }}
+      UD_FORMAT: ${{ inputs.format }}
+      UD_OUTPUT: ${{ inputs.output }}
+      UD_TOOL_ENV: ${{ steps.install.outputs.tool-env }}
+    run: '"$UD_TOOL_ENV/bin/python" -m update_dependencies.action --prepare'
+  - name: Set up Docker Buildx
+    if: steps.prepare.outputs.docker == 'true'
+    uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
+  - name: Update dependencies
+    id: update
+    shell: bash
+    env:
+      UD_DIRECTORY: ${{ inputs.directory }}
+      UD_CONFIG: ${{ inputs.config }}
+      UD_NO_CONFIG: ${{ inputs.no-config }}
+      UD_ECOSYSTEMS: ${{ inputs.ecosystems }}
+      UD_DRY_RUN: ${{ inputs.dry-run }}
+      UD_CHECK: ${{ inputs.check }}
+      UD_ALLOW_MAJOR: ${{ inputs.allow-major }}
+      UD_MIN_AGE: ${{ inputs.min-age }}
+      UD_STALE_DAYS: ${{ inputs.stale-days }}
+      UD_PYTHON_INLINE_SCRIPTS: ${{ inputs.python-inline-scripts }}
+      UD_PYTHON_ADD_MINIMUMS: ${{ inputs.python-add-minimums }}
+      UD_PYTHON_UPDATE_BUILD_BACKEND: ${{ inputs.python-update-build-backend }}
+      UD_SYNC: ${{ inputs.sync }}
+      UD_DOCKER_PIN_LATEST: ${{ inputs.docker-pin-latest }}
+      UD_INCLUDE: ${{ inputs.include }}
+      UD_EXCLUDE: ${{ inputs.exclude }}
+      UD_TIMEOUT: ${{ inputs.timeout }}
+      UD_RETRIES: ${{ inputs.retries }}
+      UD_PROGRESS: ${{ inputs.progress }}
+      UD_FORMAT: ${{ inputs.format }}
+      UD_OUTPUT: ${{ inputs.output }}
+      UD_TOOL_ENV: ${{ steps.install.outputs.tool-env }}
+    run: '"$UD_TOOL_ENV/bin/python" -m update_dependencies.action'

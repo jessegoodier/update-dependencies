@@ -1,0 +1,45 @@
+[build-system]
+requires = ["uv_build>=0.13.6,<0.14"]
+build-backend = "uv_build"
+
+[project]
+name = "update-dependencies"
+version = "0.1.0"
+description = "Update Python dependencies, GitHub Actions, Docker digests, and pre-commit hooks."
+readme = "README.md"
+requires-python = ">=3.14,<3.15"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "Jesse Goodier"}]
+keywords = ["dependencies", "github-actions", "uv", "automation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Build Tools",
+]
+dependencies = ["packaging>=26.3", "rich>=15.0.0", "pyyaml>=6.0.3"]
+
+[project.optional-dependencies]
+tui = ["questionary>=2.1.1"]
+
+[project.scripts]
+update-dependencies = "update_dependencies.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/jessegoodier/update-dependencies"
+Issues = "https://github.com/jessegoodier/update-dependencies/issues"
+
+[dependency-groups]
+dev = ["pre-commit>=4.7.0", "pytest>=9.2.0", "ruff>=0.17.3"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py314"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--import-mode=importlib"]
+
+[tool.uv.build-backend]
+source-include = ["tests/**", "docs/**", "CHANGELOG.md", ".python-version"]
