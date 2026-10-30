@@ -97,3 +97,20 @@ Current official references verified during the 2026 migration:
 [uv build backend](https://docs.astral.sh/uv/concepts/build-backend/),
 [GitHub Action metadata](https://docs.github.com/en/actions/reference/workflows-and-actions/metadata-syntax),
 [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/using-a-publisher/).
+
+## This repository's dependency PR workflow
+
+Run **Actions → Update dependencies → Run workflow** to update all ecosystems,
+including major versions and the uv build backend. Releases keep the default
+48-hour cooldown; `NO_AUTO_UPDATE` and Docker `latest` exclusions still apply.
+The weekly schedule uses the same workflow. It validates the changes, commits
+only files in the applied update report, and creates a uniquely named PR. A run
+with no changes opens no PR. Repeated runs with available updates can open
+separate PRs; close obsolete ones before merging.
+
+The workflow needs `contents: write`, `pull-requests: write`, and `actions: write`.
+Enable **Allow GitHub Actions to create and approve pull requests** in repository
+Actions settings (only PR creation is used). CI is explicitly dispatched on the
+new branch so validation does not depend on approval of token-created PR events.
+Review the dispatched CI run for the PR's exact head commit before merging.
+Automatic merging of future update PRs is deliberately not enabled.
