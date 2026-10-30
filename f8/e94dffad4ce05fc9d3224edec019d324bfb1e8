@@ -1,0 +1,203 @@
+scripts/pre_commit_hooks/check_repo_safety.py
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 1-64
+.github/workflows/update-dependencies.yml
+  s_ef4f28a7a606f7::t_9ee39f410b4935 1-26
+src/update_dependencies/__init__.py
+  s_ef4f28a7a606f7::t_7d289a34178751 1-5
+src/update_dependencies/processes.py
+  s_ef4f28a7a606f7::t_61053fb22983ef 9-11,48,52-55,73
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 7,15-47,49
+  s_ef4f28a7a606f7::t_7d1d9b05f2bfdb 57-72,74-75
+  s_ef4f28a7a606f7::t_ca3b718e448baf 1-6,8,12-14,50-51,56
+src/update_dependencies/config.py
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 3,30,49,86-90
+  s_ef4f28a7a606f7::t_61053fb22983ef 23,36-45,50-67
+  s_ef4f28a7a606f7::t_9ee39f410b4935 84
+  s_ef4f28a7a606f7::t_d6fdcb0e560306 1-2,4-22,24-29,31-35,46-48,68-83,85,91-106
+tests/test_hooks_policy.py
+  s_ef4f28a7a606f7::t_e07f7e97e5febb 1-44,46-51
+  s_ef4f28a7a606f7::t_61053fb22983ef 45
+src/update_dependencies/engine.py
+  s_ef4f28a7a606f7::t_7199037ed9b503 341
+  s_ef4f28a7a606f7::t_7d1d9b05f2bfdb 26,700,815,823
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 1,43-50,196-200,694,696,731-732,1128-1129
+  s_ef4f28a7a606f7::t_7d289a34178751 2-25,28-42,51-161,163-176,178-180,182,184-186,188-195,201,203-221,223-237,239-246,248-275,277-285,287-292,294-328,330-340,343-485,489,491-492,496,498-499,503,507-517,519-548,550-563,565-575,577-634,636-657,659-666,668-681,683-693,697-699,701-716,718-730,733-788,790-801,803-814,816-822,824-862,864,866-925,929,931-932,936,938-952,956,958-959,962-1002,1004-1019,1021-1023,1029-1032,1035-1068,1070-1071,1073-1085,1087-1127,1130-1137,1139-1152
+  s_ef4f28a7a606f7::t_61053fb22983ef 27,162,177,181,183,187,202,222,238,247,276,286,293,329,342,518,549,564,576,635,658,667,682,695,717,789,802,863,865,960-961,1003,1020,1033-1034,1069,1072,1086,1138
+  s_ef4f28a7a606f7::t_6ef4ff97671d77 486-488,490,493-495,497,500-502,504-506,926-928,930,933-935,937,953-955,957,1024-1028
+tests/test_configuration.py
+  s_ef4f28a7a606f7::t_26e1e0d3f582fa 94-101
+  s_ef4f28a7a606f7::t_7d1d9b05f2bfdb 1-19,21-27,29-45,47-76,78-83,85-93
+  s_ef4f28a7a606f7::t_61053fb22983ef 20,28,77,84
+  s_ef4f28a7a606f7::t_0c2c58381b6cfd 46
+  s_ef4f28a7a606f7::t_c10797f9c77768 102-118
+tests/test_processes.py
+  s_ef4f28a7a606f7::t_26e1e0d3f582fa 1-13,15-22,24-29,32-34,36-40,42
+  s_ef4f28a7a606f7::t_61053fb22983ef 14,23
+  s_ef4f28a7a606f7::t_9bb3ea37171e77 30-31,35,41
+scripts/pre_commit_hooks/check_secrets.py
+  s_ef4f28a7a606f7::t_61053fb22983ef 1-138
+src/update_dependencies/context.py
+  s_ef4f28a7a606f7::t_e07f7e97e5febb 26
+  s_ef4f28a7a606f7::t_61053fb22983ef 34
+  s_ef4f28a7a606f7::t_301259622da2ea 1-25,27-33,35-50
+src/update_dependencies/ecosystems/python.py
+  s_ef4f28a7a606f7::t_7199037ed9b503 90
+  s_ef4f28a7a606f7::t_61053fb22983ef 6,15,17,28,39,60
+  s_ef4f28a7a606f7::t_e07f7e97e5febb 91-98
+  s_ef4f28a7a606f7::t_6ef4ff97671d77 1-5,7-14,16,18-27,29-38,40-59,61-89,99-139
+src/update_dependencies/progress.py
+  s_ef4f28a7a606f7::t_61053fb22983ef 1-68
+scripts/pre_commit_hooks/sorter.py
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 1-10,12-14,16-32,34-104
+  s_ef4f28a7a606f7::t_61053fb22983ef 11,15,33
+src/update_dependencies/ecosystems/hooks.py
+  s_ef4f28a7a606f7::t_61053fb22983ef 6,37,72,92
+  s_ef4f28a7a606f7::t_e07f7e97e5febb 1,9-34,36,38-40,43,48-49,51,57-71,73-87,90,93
+  s_ef4f28a7a606f7::t_6ef4ff97671d77 2-5,7-8,35,41-42,44-47,50,52-56,88-89,91
+pyproject.toml
+  s_ef4f28a7a606f7::t_61053fb22983ef 37
+  s_6e3e41a2dd9be2::t_649982b57b2103 5,7,9,20,22,28,32,36,38
+  s_ef4f28a7a606f7::t_7d289a34178751 1-4,6,8,10-19,23,25-27,29-31,33-35,39-41,43-45
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 42
+  s_ef4f28a7a606f7::t_78b8457e491e27 21,24
+.github/workflows/release.yml
+  s_ef4f28a7a606f7::t_9ee39f410b4935 1-52
+tests/test_no_auto_update.py
+  s_6e3e41a2dd9be2::t_2bc9bab5f3722e 201,218,233-244,246-263,265-267,270-280,490
+  s_6e3e41a2dd9be2::t_0b79d5f376f6c0 186,197,220,283,288,313,318,349-371,386-416,419,421-422,424-444,449-450,452-456,459,474,491,494
+  s_ef4f28a7a606f7::t_61053fb22983ef 151-183,204-217,232,264,268-269,281,311,333,420,457,481-483
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 13
+  s_ef4f28a7a606f7::t_7d289a34178751 11-12,19-148,199,228-229,245,291-307,320,337,417,451,476
+  s_6e3e41a2dd9be2::t_604a9b2c17815a 149,418,423,445-448
+  s_6e3e41a2dd9be2::t_182fa5a57300d1 372-385
+  s_ef4f28a7a606f7::t_825e268cfdb396 1-10,14-18,150,184-185,187-196,198,200,202-203,219,221-227,230-231,282,284-287,289-290,308-310,312,314-317,319,321-332,334-336,338-348,458,460-473,475,477-480,484-489,492-493,495-504
+src/update_dependencies/__main__.py
+  s_ef4f28a7a606f7::t_7d289a34178751 1-3
+src/update_dependencies/action.py
+  s_ef4f28a7a606f7::t_61053fb22983ef 28,38,60,83,85
+  s_ef4f28a7a606f7::t_c10797f9c77768 78-82,84,88
+  s_ef4f28a7a606f7::t_d0ca3faad7ca4d 1-5,7-9,19,32-37,39-48,50-56,63-70,72-73,93-97
+  s_ef4f28a7a606f7::t_9ee39f410b4935 6,74-77,86-87,89-92
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 10-18,20-27,29-31,49,57-59,61-62,71
+src/update_dependencies/tui.py
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 2,5-6,9
+  s_ef4f28a7a606f7::t_7d289a34178751 1,3-4,7-8,10,12-64,66-98,100-159,161-163,165-180
+  s_ef4f28a7a606f7::t_ee71e129dd6ab1 160,164
+  s_ef4f28a7a606f7::t_61053fb22983ef 99
+  s_ef4f28a7a606f7::t_c10797f9c77768 11,65
+src/update_dependencies/reporting.py
+  s_ef4f28a7a606f7::t_48bf06af3bdf43 1-5,8-18,24-45
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 6-7,19-23
+  s_ef4f28a7a606f7::t_61053fb22983ef 46-47
+README.md
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 68-70
+  s_ef4f28a7a606f7::t_0c2c58381b6cfd 25-58
+  s_ef4f28a7a606f7::t_b9b002ed32ad6f 1-24,59-67,71-77
+scripts/pre_commit_hooks/check_trailing_whitespace.py
+  s_ef4f28a7a606f7::t_61053fb22983ef 56
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 1-55,57-97
+docs/configuration.md
+  s_ef4f28a7a606f7::t_0c2c58381b6cfd 25,60,68-75
+  s_ef4f28a7a606f7::t_ee71e129dd6ab1 117-118
+  s_ef4f28a7a606f7::t_c10797f9c77768 145-146
+  s_ef4f28a7a606f7::t_7199037ed9b503 1-24,26-59,61-67,76-116,119-144,147-148
+tests/test_progress.py
+  s_ef4f28a7a606f7::t_0c2c58381b6cfd 1-42,44,46-88
+  s_ef4f28a7a606f7::t_4a5d64a2f17243 43,45
+src/update_dependencies/discovery.py
+  s_ef4f28a7a606f7::t_48bf06af3bdf43 1-2,5-7,20-21,28-29,46-47,53-54,56-57,61-67,69
+  s_ef4f28a7a606f7::t_7d1d9b05f2bfdb 3,22-23,25-27,51
+  s_ef4f28a7a606f7::t_61053fb22983ef 24,55,59,70,72
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 4,8-19,30-45,48-50,52,58,60,68,71
+src/update_dependencies/cli.py
+  s_ef4f28a7a606f7::t_d0ca3faad7ca4d 1-6,8-9,11,13-17,28-31,42-52,93,131-135,137-138,141-143,148-154,166-167,184-187,189,194-198,216-226,230,232,240-245,247
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 7,10,18-20,22-27,32-41,53-91,95-113,118,121-130,136,139-140,144-147,155-165,190-193
+  s_ef4f28a7a606f7::t_61053fb22983ef 12,21,92,94,114-117,119-120,173,206,212,214-215,229,231
+  s_ef4f28a7a606f7::t_26e1e0d3f582fa 199-205,207-211,213,227-228,246
+  s_ef4f28a7a606f7::t_9ee39f410b4935 168-172,174-183,188,233-239
+src/update_dependencies/runner.py
+  s_ef4f28a7a606f7::t_48bf06af3bdf43 1-5,7-12,14,16-21,23-25,27-28,35-37,139-144,149-152,157-159,165-170,179-180,204,206,209-210,237
+  s_ef4f28a7a606f7::t_2cf3c1effea997 13,33,145-148,171-178
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 6,29-32,34,44-45,47,132,134-138
+  s_ef4f28a7a606f7::t_61053fb22983ef 15,22,26,38-43,46,48-50,52-60,62-130,133,153-156,160-164,181-203,205,207-208,211-236
+  s_ef4f28a7a606f7::t_26e1e0d3f582fa 51,61
+  s_ef4f28a7a606f7::t_e07f7e97e5febb 131
+src/update_dependencies/ecosystems/__init__.py
+  s_ef4f28a7a606f7::t_6ef4ff97671d77 1
+.pre-commit-config.yaml
+  h_cca6aa2712613d 1-42
+tests/test_runner.py
+  s_ef4f28a7a606f7::t_7d1d9b05f2bfdb 1-19,21-22,24-42,44-77,80-117,123-147
+  s_ef4f28a7a606f7::t_2cf3c1effea997 194-195,198,201-206,208-220,222-228,230-231
+  s_ef4f28a7a606f7::t_ee71e129dd6ab1 197,199-200
+  s_ef4f28a7a606f7::t_e07f7e97e5febb 148-149,151-173,175-180,182-193
+  s_ef4f28a7a606f7::t_61053fb22983ef 20,23,43,78-79,118-122,150,174,181,196,207,221,229
+.python-version
+  s_ef4f28a7a606f7::t_7d289a34178751 1
+scripts/pre_commit_hooks/prevent_protected_branch.py
+  s_ef4f28a7a606f7::t_61053fb22983ef 1-60
+CHANGELOG.md
+  s_ef4f28a7a606f7::t_0c2c58381b6cfd 11-12
+  s_ef4f28a7a606f7::t_7199037ed9b503 1-10
+action.yml
+  s_ef4f28a7a606f7::t_9ee39f410b4935 1-79,84-121,132-153,155-156,158-183,185-186,188
+  s_ef4f28a7a606f7::t_61053fb22983ef 80-83,154,184
+  s_ef4f28a7a606f7::t_0d920e013ff40c 122-131,157,187
+scripts/pre_commit_hooks/end_of_file_fixer.py
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 1-72
+docs/github-action.md
+  s_ef4f28a7a606f7::t_7199037ed9b503 1-36,38-67,71-99
+  s_ef4f28a7a606f7::t_0c2c58381b6cfd 37,68-70
+scripts/update_dependencies.py
+  s_ef4f28a7a606f7::t_787ad6e6f6bc4b 1-7
+src/update_dependencies/ecosystems/actions.py
+  s_ef4f28a7a606f7::t_61053fb22983ef 9,29,35,47,52,89,104,137,139,193,221-222,224
+  s_ef4f28a7a606f7::t_c10797f9c77768 36-46,50-51,53-54
+  s_ef4f28a7a606f7::t_6ef4ff97671d77 1-8,10-28,30-34,48-49,55-88,90-103,105-136,138,140-192,194-220,223,225-309
+src/update_dependencies/ecosystems/docker.py
+  s_ef4f28a7a606f7::t_61053fb22983ef 11,16,77,99,102
+  s_ef4f28a7a606f7::t_6ef4ff97671d77 1-10,12-15,17-76,78-98,100-101,103-125
+.github/scripts/verify_dist.py
+  s_ef4f28a7a606f7::t_61053fb22983ef 14,24-25,37-50
+  s_ef4f28a7a606f7::t_9ee39f410b4935 1-8,11-13,15-23,26-36,51-57
+  s_ef4f28a7a606f7::t_71bbd201ba0cd5 9-10
+.github/workflows/ci.yml
+  s_ef4f28a7a606f7::t_9ee39f410b4935 1-47
+.gitignore
+  s_ef4f28a7a606f7::t_79923bfb40a5b6 1-220
+scripts/pre_commit_hooks/check_yaml.py
+  s_ef4f28a7a606f7::t_23d488452bb6f1 1-64
+tests/Dockerfile
+  s_ef4f28a7a606f7::t_d5b9a3fcc2462b 1-11
+uv.lock
+  s_ef4f28a7a606f7::t_4a235cd0faa3fd 1-337
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f8e94dffad4ce05fc9d3224edec019d324bfb1e8",
+  "prompts": {},
+  "humans": {
+    "h_cca6aa2712613d": {
+      "author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  },
+  "sessions": {
+    "s_6e3e41a2dd9be2": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "1cd7c863-53df-45d2-87f3-daefb7d38743",
+        "model": "default"
+      },
+      "human_author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    },
+    "s_ef4f28a7a606f7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a18965-990b-71b1-a1a0-3c46c649d3e3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
