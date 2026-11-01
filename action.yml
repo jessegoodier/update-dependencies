@@ -5,6 +5,10 @@ branding:
   icon: refresh-cw
   color: blue
 inputs:
+  plain:
+    description: Disable color, tables, and live progress (true or false)
+    required: false
+    default: 'true'
   directory:
     description: Repository directory, relative to the caller working directory
     required: false
@@ -133,6 +137,7 @@ runs:
     id: prepare
     shell: bash
     env:
+      UD_PLAIN: ${{ inputs.plain }}
       UD_DIRECTORY: ${{ inputs.directory }}
       UD_CONFIG: ${{ inputs.config }}
       UD_NO_CONFIG: ${{ inputs.no-config }}
@@ -163,6 +168,7 @@ runs:
     id: update
     shell: bash
     env:
+      UD_PLAIN: ${{ inputs.plain }}
       UD_DIRECTORY: ${{ inputs.directory }}
       UD_CONFIG: ${{ inputs.config }}
       UD_NO_CONFIG: ${{ inputs.no-config }}

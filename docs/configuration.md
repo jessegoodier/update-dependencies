@@ -23,6 +23,7 @@ check = false
 timeout = 120
 retries = 2
 progress = "auto"
+plain = false
 include = []
 exclude = ["vendor/**", "tests/fixtures/**"]
 
@@ -57,6 +58,7 @@ inline-scripts = true
 | `check` | `--check` / `--no-check` | `false` |
 | `timeout` | `--timeout SECONDS` | `120` |
 | `retries` | `--retries COUNT` | `2` |
+| `plain` | `--plain` / `--no-plain` | `false` |
 | `progress` | `--progress auto\|plain\|off` | `auto` |
 | `include` | Repeatable `--include GLOB` | All discovered files |
 | `exclude` | Repeatable `--exclude GLOB` | Empty |
@@ -65,6 +67,13 @@ inline-scripts = true
 | `python.update-build-backend` | `--python-update-build-backend` / `--no-python-update-build-backend` | `false` |
 | `python.sync` | `--sync` / `--no-sync` | `false` |
 | `docker.pin-latest` | `--docker-pin-latest` / `--no-docker-pin-latest` | `false` |
+
+Interactive text output uses Rich colors and dependency tables. `--plain` (or
+`plain = true`) disables colors, tables, and live indicators, including diagnostics
+and even when `FORCE_COLOR` is set. `--no-plain` overrides a configured plain mode.
+Redirected output uses simple lines by default. `NO_COLOR` is respected by Rich.
+The Action defaults to `plain: 'true'`; local CLI runs default to Rich formatting.
+`--format json` and JSON report files retain their machine-readable format.
 
 Progress is written to stderr, including elapsed time, ecosystem start/completion,
 current files or dependency lookups, retries, validation, and application. `auto`

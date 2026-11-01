@@ -7,6 +7,7 @@ from .cli import effective_config, main, parser
 
 # Each supported CLI setting is represented explicitly; no raw shell arguments.
 BOOLEAN_INPUTS = (
+    "plain",
     "dry-run",
     "check",
     "allow-major",
@@ -35,7 +36,11 @@ LIST_INPUTS = ("include", "exclude")
 def arguments(environment: dict[str, str]) -> list[str]:
     result = []
     for name in BOOLEAN_INPUTS:
-        value = environment.get("UD_" + name.upper().replace("-", "_"), "").strip().lower()
+        value = (
+            environment.get("UD_" + name.upper().replace("-", "_"), "true" if name == "plain" else "")
+            .strip()
+            .lower()
+        )
         if not value:
             continue
         if value not in {"true", "false"}:

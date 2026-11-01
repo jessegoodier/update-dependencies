@@ -17,6 +17,7 @@ jobs:
         id: update
         with:
           dry-run: 'true'
+          plain: 'true'
           allow-major: 'false'
         env:
           GH_TOKEN: ${{ github.token }}

@@ -21,6 +21,7 @@ class Config:
     timeout: int = 120
     retries: int = 2
     progress: str = "auto"
+    plain: bool = False
     python_inline_scripts: bool = True
     python_add_minimums: bool = False
     python_sync: bool = False

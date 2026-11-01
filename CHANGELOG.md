@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Restore Rich CLI colors/tables and add --plain; default Action logs to plain.
+- Add a manual release dropdown with patch/minor/major increments and a patch default.
+- Validate bumped versions, open metadata PRs, tag commits, and create releases after publication.
+
 ## 0.1.0
 
 - Package the updater with uv_build and a Python 3.14 CLI.

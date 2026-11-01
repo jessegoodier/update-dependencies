@@ -77,7 +77,7 @@ def test_action_inputs_match_adapter_and_config_fields():
     assert set(Config.__dataclass_fields__) - {"schema_version", "python_sync"} <= destinations
     for name, definition in metadata["inputs"].items():
         if name in BOOLEAN_INPUTS:
-            assert definition["default"] == ""
+            assert definition["default"] == ("true" if name == "plain" else "")
 
 
 def test_print_config_has_no_registry_side_effects(tmp_path, capsys):

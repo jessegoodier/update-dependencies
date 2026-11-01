@@ -1,11 +1,93 @@
 name: Release
 on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version increment (used when starting from main)
+        type: choice
+        required: true
+        default: patch
+        options: [patch, minor, major]
   push:
     tags: ['v*']
 permissions:
   contents: read
+concurrency:
+  group: release-${{ github.ref_type }}-${{ github.ref_name }}
+  cancel-in-progress: false
 jobs:
+  prepare:
+    if: github.event_name == 'workflow_dispatch' && github.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      - name: Require the default branch
+        env:
+          SELECTED_BRANCH: ${{ github.ref_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if [ "$SELECTED_BRANCH" != "$DEFAULT_BRANCH" ]; then
+            echo 'Start version bumps from the default branch.' >&2
+            exit 1
+          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.6'
+          python-version: '3.14'
+      - run: uv sync --locked --all-extras
+      - name: Bump project version and lockfile
+        id: version
+        env:
+          RELEASE_BUMP: ${{ inputs.bump }}
+        run: uv run python .github/scripts/bump_version.py --bump "$RELEASE_BUMP"
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest
+      - run: uv build
+      - run: uvx --from 'twine>=6.2' twine check --strict dist/*
+      - run: uv run python .github/scripts/verify_dist.py
+      - name: Commit the version bump on a release branch and open its PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          RELEASE_BRANCH="release/$RELEASE_TAG-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          git switch -c "$RELEASE_BRANCH"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pyproject.toml uv.lock
+          git commit -m "Bump version to $RELEASE_TAG"
+          git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
+          cat > "$RUNNER_TEMP/version-pr.md" <<'BODY'
+          Record the automatically validated release version in pyproject.toml and uv.lock.
+
+          The release tag points to this commit. Merge this PR to keep the default branch's version metadata current.
+          BODY
+          gh pr create --base "$DEFAULT_BRANCH" --head "$RELEASE_BRANCH" \
+            --title "Bump version to $RELEASE_TAG" --body-file "$RUNNER_TEMP/version-pr.md"
+      - name: Tag validated code and start publishing on the tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          RELEASE_BUMP: ${{ inputs.bump }}
+        run: |
+          git tag -a "$RELEASE_TAG" -m "Release $RELEASE_TAG"
+          git push origin "refs/tags/$RELEASE_TAG"
+          # GITHUB_TOKEN tag pushes do not trigger push workflows; explicit dispatch does.
+          # Running on the tag also preserves the pypi environment's v* tag restriction.
+          gh workflow run release.yml --ref "$RELEASE_TAG" --field "bump=$RELEASE_BUMP"
+          printf '### Release prepared\n\nPublishing dispatched for %s.\n' "$RELEASE_TAG" >> "$GITHUB_STEP_SUMMARY"
   build:
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -19,9 +101,11 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           uv run python - <<'PY'
-          import os, tomllib
+          import os, re, tomllib
           from pathlib import Path
           version = tomllib.loads(Path('pyproject.toml').read_text())['project']['version']
+          if not re.fullmatch(r'(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)', version):
+              raise SystemExit('Automated releases require a stable X.Y.Z version')
           if os.environ['RELEASE_TAG'] != f'v{version}':
               raise SystemExit('Release tag must match project.version')
           PY
@@ -50,3 +134,20 @@ jobs:
           name: distributions
           path: dist/
       - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+  release:
+    needs: [build, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create the GitHub release after PyPI publishing succeeds
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists; leaving it unchanged."
+          else
+            gh release create "$RELEASE_TAG" --verify-tag --title "$RELEASE_TAG" --generate-notes
+          fi

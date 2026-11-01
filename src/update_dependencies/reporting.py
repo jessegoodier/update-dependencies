@@ -45,3 +45,53 @@ def github_report(report: Report, report_path: Path | None):
             mode = "Proposed" if report.dry_run else "Updated"
             stream.write(f"## Dependency updates\n\n{mode} {len(report.changed_files)} file(s).\n\n")
             stream.writelines(f"- {json.dumps(name)}\n" for name in report.changed_files)
+
+
+def print_report(report: Report, *, plain: bool = False, console=None):
+    """Render a terminal table or stable, unstyled log lines."""
+    from rich.table import Table
+    from rich.text import Text
+
+    from .display import make_console
+
+    console = console if console is not None else make_console()
+    mode = "Would update" if report.dry_run else "Updated"
+    summary = f"{mode} {len(report.changed_files)} file(s)."
+    if plain or not console.is_terminal:
+        console.out(summary, highlight=False)
+        for path in report.changed_files:
+            console.out(f"  {path}", highlight=False)
+        for change in report.changes:
+            note = f" ({change['note']})" if change.get("note") else ""
+            console.out(
+                f"  {change['ecosystem']}: {change['name']} {change['old']} -> {change['new']}{note}",
+                highlight=False,
+            )
+        for item in report.skipped:
+            console.out(
+                f"Skipped {item.get('ecosystem', item.get('file', ''))}: {item['reason']}", highlight=False
+            )
+        return
+
+    console.print(Text(summary, style="bold magenta" if report.dry_run else "bold green"))
+    for path in report.changed_files:
+        console.print(Text(f"  {path}", style="cyan"))
+    if report.changes:
+        table = Table(header_style="bold cyan", border_style="dim", expand=True)
+        for name in ("Ecosystem", "Dependency", "Before", "After", "Details"):
+            table.add_column(name, overflow="fold")
+        for change in report.changes:
+            kind = change.get("kind", "")
+            style = "yellow" if kind in {"major", "cooldown", "stale", "archived"} else "green"
+            table.add_row(
+                Text(change["ecosystem"], style="cyan"),
+                Text(change["name"]),
+                Text(change["old"], style="dim"),
+                Text(change["new"], style=style),
+                Text(change.get("note", kind)),
+            )
+        console.print(table)
+    for item in report.skipped:
+        console.print(
+            Text(f"Skipped {item.get('ecosystem', item.get('file', ''))}: {item['reason']}", style="yellow")
+        )

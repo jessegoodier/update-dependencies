@@ -38,6 +38,7 @@ jobs:
           directory: ${{ runner.temp }}/updater-fixture
           ecosystems: docker
           dry-run: 'true'
+          plain: 'true'
       - name: Check Action outputs
         env:
           CHANGED: ${{ steps.update.outputs.changed }}

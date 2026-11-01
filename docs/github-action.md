@@ -35,6 +35,7 @@ jobs:
           allow-major: 'false'
           dry-run: 'true'
           progress: plain
+          plain: 'true'
         env:
           GH_TOKEN: ${{ github.token }}
 ```
@@ -45,8 +46,12 @@ its checked-out action and uploads a preview report. GitHub Actions publishing
 and PyPI publishing are separate: this action can run directly from a repository
 commit even before the first PyPI release.
 
+The Action defaults to `plain: 'true'` for colorless logs without tables or live
+indicators. Set `plain: 'false'` to use normal terminal detection instead.
+
 Inputs mirror [configuration CLI options](configuration.md). Every boolean accepts
-`'true'` or `'false'`; empty means inherit. `ecosystems` is comma-separated;
+`'true'` or `'false'`; empty means inherit. The `plain` input is the exception
+to the empty default: it defaults to `'true'`. `ecosystems` is comma-separated;
 `include` and `exclude` are newline-separated globs. Runtime-only inputs are
 `directory`, `config`, `no-config`, `format`, and `output`. Interactive prompting,
 printing config, and legacy no-op aliases are intentionally absent from the Action.
@@ -67,7 +72,8 @@ A default report is written to `$RUNNER_TEMP/update-dependencies-report.json`;
 set `output` for distinct reports when running multiple instances in one job.
 A step summary is written automatically. The `progress` input accepts `auto`,
 `plain`, or `off`, and defaults to inheriting repository configuration. CI progress
-is written as plain stderr lines with elapsed times; JSON stdout remains separate. Check mode returns a failing step when
+is written as plain stderr lines with elapsed times; JSON stdout remains separate.
+Check mode returns a failing step when
 updates exist; use `continue-on-error` when the caller intends to inspect that
 outcome and continue.
 
@@ -88,10 +94,15 @@ Create the `pypi` GitHub environment, and configure PyPI Trusted Publishing with
 - Workflow: `release.yml`
 - Environment: `pypi`
 
-The tagged package version must equal the tag without `v`. Build/test and artifact
-installation occur in a read-only job. Only the separate publish job requests
-`id-token: write`; it downloads the validated artifacts and uses the SHA-pinned
-PyPA publishing action. No permanent API token is configured.
+Use **Actions → Release → Run workflow**, select the default branch, and choose
+`patch` (default), `minor`, or `major`. The workflow updates the version and lockfile,
+validates them, creates a release branch and metadata PR, then tags the validated
+commit. It explicitly dispatches publishing on that tag, retaining the protected
+`pypi` environment. The GitHub release is created after publishing succeeds.
+
+See [release automation](releasing.md) for repository permissions, version PRs,
+manual tags, and retry instructions. The existing PyPI trusted publisher continues
+to use `release.yml` and environment `pypi`; no additional PyPI token is needed.
 
 Current official references verified during the 2026 migration:
 [uv build backend](https://docs.astral.sh/uv/concepts/build-backend/),

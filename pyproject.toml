@@ -42,4 +42,7 @@ testpaths = ["tests"]
 addopts = ["--import-mode=importlib"]
 
 [tool.uv.build-backend]
-source-include = ["tests/**", "docs/**", "CHANGELOG.md", ".python-version"]
+source-include = [
+    "tests/**", "docs/**", "scripts/**", ".github/**", "action.yml", "uv.lock",
+    ".pre-commit-config.yaml", "CHANGELOG.md", ".python-version",
+]

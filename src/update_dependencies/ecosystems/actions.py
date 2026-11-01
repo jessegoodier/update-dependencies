@@ -44,7 +44,7 @@ def update_actions(
                         "reason": "Commit lookup unavailable",
                     }
                 )
-                shared.console.print(f"[yellow]actions: no commit for {repo}@{ref}, skipped[/]")
+                shared.diagnostics().print(f"[yellow]actions: no commit for {repo}@{ref}, skipped[/]")
                 commits[(repo, ref)] = None
             else:
                 payload = json.loads(result.stdout)
@@ -108,7 +108,7 @@ def update_actions(
             allow_not_found=True,
         )
         if result.returncode != 0:
-            shared.console.print(f"[yellow]actions: no releases for {repo}, skipped[/]")
+            shared.diagnostics().print(f"[yellow]actions: no releases for {repo}, skipped[/]")
             latest_tags[repo] = None
             return None
 
@@ -136,7 +136,7 @@ def update_actions(
             # Fall back for repos that only ship floating or non-semver tags.
             latest = shared.run(["gh", "api", f"repos/{repo}/releases/latest"], allow_not_found=True)
             if latest.returncode != 0:
-                shared.console.print(f"[yellow]actions: no latest release for {repo}, skipped[/]")
+                shared.diagnostics().print(f"[yellow]actions: no latest release for {repo}, skipped[/]")
                 latest_tags[repo] = None
                 return None
             payload = json.loads(latest.stdout)

@@ -8,6 +8,8 @@ from time import perf_counter
 from rich.console import Console
 from rich.text import Text
 
+from .display import make_console
+
 # Kept separate from repository state so discovery and final apply can report too.
 _current: ContextVar[Progress | None] = ContextVar("update_dependencies_progress", default=None)
 
@@ -34,7 +36,7 @@ def phase(label: str):
 class Progress:
     def __init__(self, mode: str = "auto", *, console: Console | None = None):
         self.mode = mode
-        self.console = console if console is not None else Console(stderr=True)
+        self.console = console if console is not None else make_console(stderr=True, plain=mode == "plain")
         self.started = 0.0
         self.status = None
         self.token = None
@@ -62,7 +64,23 @@ class Progress:
         # Lazy import avoids a dependency cycle with process retry reporting.
         from .processes import redact
 
-        text = Text(f"[{perf_counter() - self.started:6.1f}s] {redact(message)}")
+        message = redact(message)
+        text = Text()
+        text.append(
+            f"[{perf_counter() - self.started:6.1f}s] ", style="dim" if self.mode != "plain" else None
+        )
+        style = None
+        if self.mode != "plain":
+            style = (
+                "red"
+                if "failed" in message
+                else "green"
+                if "done in" in message
+                else "yellow"
+                if "skipped" in message
+                else "cyan"
+            )
+        text.append(message, style=style)
         self.console.print(text, soft_wrap=True)
         if self.status is not None:
             self.status.update(Text(redact(message)))

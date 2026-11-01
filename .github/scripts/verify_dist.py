@@ -44,6 +44,7 @@ def main():
                     str(working),
                     "--no-config",
                     "--dry-run",
+                    "--plain",
                     "--format",
                     "json",
                 ],

@@ -8,9 +8,10 @@ from pathlib import Path
 
 from . import __version__
 from .config import ECOSYSTEMS, Config, load_config
+from .display import output_style
 from .processes import redact
 from .progress import Progress
-from .reporting import github_report
+from .reporting import github_report, print_report
 from .runner import run
 
 
@@ -40,6 +41,7 @@ def parser() -> argparse.ArgumentParser:
         help="Compatibility alias for selecting one ecosystem",
     )
     booleans = {
+        "plain": "Disable color, tables, and live progress for plain logs",
         "dry-run": "Preview without changing target files",
         "check": "Preview; exit 1 when updates are available",
         "allow-major": "Allow major updates (default: enabled)",
@@ -186,50 +188,43 @@ def main(argv: list[str] | None = None) -> int:
     args = arguments.parse_args(argv)
     try:
         root, config = effective_config(args)
-        if args.update_docker_tags:
-            print(
-                "warning: --update-docker-tags is deprecated and has no effect",
-                file=sys.stderr,
-            )
-        if args.tui:
-            config = interactive(config, root)
-        if args.print_config:
-            print(json.dumps(config.to_dict(), indent=2))
-            return 0
-        output = args.output.expanduser().absolute() if args.output else None
-        if output and output.exists():
-            if output.is_symlink():
-                raise ValueError("--output cannot overwrite a symlink")
-            try:
-                previous = json.loads(output.read_text(encoding="utf-8"))
-            except (OSError, ValueError) as error:
-                raise ValueError("--output refuses to overwrite an existing non-report file") from error
-            if (
-                not isinstance(previous, dict)
-                or "changed_files" not in previous
-                or previous.get("schema_version") != 1
-            ):
-                raise ValueError("--output refuses to overwrite an existing non-report file")
-        output = output.resolve() if output else None
-        with Progress(config.progress):
-            report = run(root, config, explicit=bool(args.only or args.ecosystems))
-        if output:
-            output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(report.json(), encoding="utf-8")
-        github_report(report, output)
-        if args.format == "json":
-            print(report.json(), end="")
-        else:
-            mode = "Would update" if report.dry_run else "Updated"
-            print(f"{mode} {len(report.changed_files)} file(s).")
-            for path in report.changed_files:
-                print(f"  {path}")
-            for change in report.changes:
-                note = f" ({change['note']})" if change.get("note") else ""
-                print(f"  {change['ecosystem']}: {change['name']} {change['old']} -> {change['new']}{note}")
-            for item in report.skipped:
-                print(f"Skipped {item.get('ecosystem', item.get('file', ''))}: {item['reason']}")
-        return 1 if config.check and report.changed_files else 0
+        with output_style(config.plain):
+            if args.update_docker_tags:
+                print(
+                    "warning: --update-docker-tags is deprecated and has no effect",
+                    file=sys.stderr,
+                )
+            if args.tui:
+                config = interactive(config, root)
+            if args.print_config:
+                print(json.dumps(config.to_dict(), indent=2))
+                return 0
+            output = args.output.expanduser().absolute() if args.output else None
+            if output and output.exists():
+                if output.is_symlink():
+                    raise ValueError("--output cannot overwrite a symlink")
+                try:
+                    previous = json.loads(output.read_text(encoding="utf-8"))
+                except (OSError, ValueError) as error:
+                    raise ValueError("--output refuses to overwrite an existing non-report file") from error
+                if (
+                    not isinstance(previous, dict)
+                    or "changed_files" not in previous
+                    or previous.get("schema_version") != 1
+                ):
+                    raise ValueError("--output refuses to overwrite an existing non-report file")
+            output = output.resolve() if output else None
+            with Progress("plain" if config.plain and config.progress != "off" else config.progress):
+                report = run(root, config, explicit=bool(args.only or args.ecosystems))
+            if output:
+                output.parent.mkdir(parents=True, exist_ok=True)
+                output.write_text(report.json(), encoding="utf-8")
+            github_report(report, output)
+            if args.format == "json":
+                print(report.json(), end="")
+            else:
+                print_report(report, plain=config.plain)
+            return 1 if config.check and report.changed_files else 0
     except (
         OSError,
         ValueError,
