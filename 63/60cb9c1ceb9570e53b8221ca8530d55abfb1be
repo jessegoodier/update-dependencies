@@ -1,0 +1,29 @@
+tests/test_dependency_pr.py
+  s_6b25f7d2451ec4::t_ea14062c7bb7eb 1-117
+.github/workflows/update-dependencies.yml
+  s_6b25f7d2451ec4::t_ea14062c7bb7eb 1,7-9,14,22-25,28-45,47
+.github/scripts/dependency_pr.py
+  s_6b25f7d2451ec4::t_ea14062c7bb7eb 1-79
+docs/github-action.md
+  s_6b25f7d2451ec4::t_ea14062c7bb7eb 111-127
+.github/workflows/ci.yml
+  s_6b25f7d2451ec4::t_ea14062c7bb7eb 6
+uv.lock
+  s_6b25f7d2451ec4::t_8bedd70ae30d54 100,102,104,171,176,178
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6360cb9c1ceb9570e53b8221ca8530d55abfb1be",
+  "prompts": {},
+  "sessions": {
+    "s_6b25f7d2451ec4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a18db6-5ff8-7063-91b7-6cf3e22892cc",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
