@@ -35,7 +35,7 @@ repos:
     language: system
   - id: check-yaml
     name: check yaml
-    entry: python3 scripts/pre_commit_hooks/check_yaml.py
+    entry: uv run --locked --no-sync python scripts/pre_commit_hooks/check_yaml.py
     language: system
     args:
     - --allow-multiple-documents

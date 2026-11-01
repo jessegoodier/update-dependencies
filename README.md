@@ -22,6 +22,10 @@ compatibility; set `allow-major = false` for a conservative policy. `NO_AUTO_UPD
 in a same-line or immediately preceding comment preserves individual exclusions.
 Docker `latest` tags are left alone unless explicitly enabled.
 
+Interactive CLI runs use Rich colors and dependency tables. Add `--plain` for
+unstyled logs, or configure `plain = true`. The GitHub Action defaults to plain
+output; JSON remains unchanged.
+
 Progress on stderr shows the current ecosystem, files/lookups, and elapsed times.
 Use `--progress plain` for logs or `--progress off` for quiet runs; JSON output
 stays on stdout.
@@ -62,16 +66,18 @@ uv sync --locked --all-extras
 uv run pytest
 uv run ruff check .
 uv run ruff format --check .
+go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
 uv build
+uv run python .github/scripts/verify_dist.py
 ```
 
 `scripts/update_dependencies.py` is a compatibility launcher for an installed
 checkout. Run it with `uv run python scripts/update_dependencies.py --help`.
 The old root filename was moved to avoid shadowing the installed Python package.
 
-Release by updating `project.version`, regenerating `uv.lock`, and pushing a
-matching `vX.Y.Z` tag. The release workflow builds, checks, installs, and smoke-tests
-both distribution formats before publishing through PyPI Trusted Publishing.
-Configure the PyPI trusted publisher for this repository, `release.yml`, and the
-`pypi` GitHub environment before publishing. No stored PyPI API token is needed.
-PyPI project-name availability/ownership must be confirmed by the publisher.
+Start a release from **Actions → Release → Run workflow** on the default branch.
+Choose **patch** (default), **minor**, or **major**. After validation, automation
+opens a version PR. After you merge it and default-branch CI passes, automation
+tags the tested merged commit, publishes through the protected `pypi` environment,
+then creates the GitHub release. See [release setup](docs/releasing.md)
+for GitHub permissions, approval, and retry steps.

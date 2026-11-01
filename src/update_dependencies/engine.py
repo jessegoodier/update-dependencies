@@ -18,17 +18,16 @@ from pathlib import Path
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.specifiers import SpecifierSet
 from packaging.version import InvalidVersion, Version
-from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 
 from .context import context
+from .display import diagnostics
 from .processes import execute, open_url
 from .progress import emit
 
 type SpecsFn = Callable[[str], Iterator[tuple[int, int, str, Requirement]]]
 
-console = Console(stderr=True)
 
 ECOSYSTEMS = ("python", "actions", "docker", "hooks")
 
@@ -431,7 +430,7 @@ def emit_section(
 ) -> None:
     """Print one ecosystem as a colored count line plus borderless bump rows."""
     if not rows and not extra:
-        console.print(f"[bold cyan]{title:<7}[/] [green]up to date[/]")
+        diagnostics().print(f"[bold cyan]{title:<7}[/] [green]up to date[/]")
         return
     counts: dict[str, int] = {}
     for kind, *_rest in rows:
@@ -444,7 +443,7 @@ def emit_section(
             bits.append(f"[{KIND_STYLE.get(kind, 'white')}]{count} {kind}[/]")
     if extra:
         bits.append(f"[dim]{extra}[/]")
-    console.print(f"[bold cyan]{title:<7}[/] " + "  ".join(bits))
+    diagnostics().print(f"[bold cyan]{title:<7}[/] " + "  ".join(bits))
     if not rows:
         return
     table = Table(
@@ -480,7 +479,7 @@ def emit_section(
             short_rev(new),
             note,
         )
-    console.print(table)
+    diagnostics().print(table)
 
 
 def update_python(*args, **kwargs):
@@ -518,7 +517,7 @@ def dockerfile_uv_version() -> str | None:
         match["version"] for path in find_dockerfiles() for match in UV_IMAGE_RE.finditer(path.read_text())
     }
     if len(versions) > 1:
-        console.print(
+        diagnostics().print(
             f"[yellow]python: Dockerfiles pin different uv versions "
             f"({', '.join(sorted(versions, key=Version))}), uv_build left as-is[/]"
         )
@@ -537,7 +536,7 @@ def latest_uv_build(
     data = fetch_json("https://pypi.org/pypi/uv-build/json")
     releases = data.get("releases") if data else None
     if not isinstance(releases, dict):
-        console.print("[yellow]python: could not read uv_build releases, skipped[/]")
+        diagnostics().print("[yellow]python: could not read uv_build releases, skipped[/]")
         return None, []
     # version -> hours since first upload, for stable, un-yanked releases.
     ages: dict[Version, float | None] = {}
@@ -650,12 +649,12 @@ def _write_uv_build_floor(version: str, dry_run: bool, *, raise_only: bool) -> l
     requirement = Requirement(spec)
     floors = [c for c in requirement.specifier if c.operator == ">="]
     if len(floors) != 1:
-        console.print(f"[yellow]python: {spec!r} has no single >= floor, skipped[/]")
+        diagnostics().print(f"[yellow]python: {spec!r} has no single >= floor, skipped[/]")
         return []
     if Version(version) not in SpecifierSet(
         ",".join(str(c) for c in requirement.specifier if c.operator != ">=")
     ):
-        console.print(f"[yellow]python: uv {version} is outside the bounds of {spec!r}, skipped[/]")
+        diagnostics().print(f"[yellow]python: uv {version} is outside the bounds of {spec!r}, skipped[/]")
         return []
     if raise_only and Version(version) <= Version(floors[0].version):
         return []
@@ -1083,12 +1082,14 @@ def print_docker(rows: list[tuple[str, str, str, str, str]]) -> None:
 
 def print_NO_AUTO_UPDATE() -> None:
     for path, name, ref in context().opt_out_skips:
-        console.print(f"[bold yellow]NO_AUTO_UPDATE[/]  {name}@{short_rev(ref)} left as-is [dim]({path})[/]")
+        diagnostics().print(
+            f"[bold yellow]NO_AUTO_UPDATE[/]  {name}@{short_rev(ref)} left as-is [dim]({path})[/]"
+        )
 
 
 def print_docker_latest_skips() -> None:
     for path, image, ref in context().docker_latest_skips:
-        console.print(
+        diagnostics().print(
             f"[bold yellow]latest[/]  {image}@{short_rev(ref)} left as-is "
             f"[dim]({path}; --enable-docker-latest-to-sha-updates)[/]"
         )
@@ -1148,5 +1149,5 @@ def resolve_ecosystems(args: argparse.Namespace, *, only_mode: bool) -> set[str]
             continue
         if only_mode:
             raise SystemExit(f"{ecosystem} updates need a project file ({reason})")
-        console.print(f"[bold cyan]{ecosystem:<7}[/] [dim]skipped ({reason})[/]")
+        diagnostics().print(f"[bold cyan]{ecosystem:<7}[/] [dim]skipped ({reason})[/]")
     return ecosystems

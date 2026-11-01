@@ -18,6 +18,7 @@ jobs:
       - uses: ./
         id: update
         with:
+          plain: 'true'
           allow-major: 'true'
           python-update-build-backend: 'true'
           min-age: '48'
