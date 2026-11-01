@@ -47,6 +47,11 @@ def prepare(root: Path, bump: str, *, dry_run: bool = False) -> str:
         actual = tomllib.loads(manifest.read_text(encoding="utf-8"))["project"]["version"]
         if actual != version or not lock.is_file():
             raise ValueError("Version preparation did not update the manifest and lockfile")
+        name = tomllib.loads(manifest.read_text(encoding="utf-8"))["project"]["name"]
+        packages = tomllib.loads(lock.read_text(encoding="utf-8")).get("package", [])
+        matching = [package for package in packages if package.get("name") == name]
+        if len(matching) != 1 or matching[0].get("version") != version:
+            raise ValueError("Version preparation left inconsistent project and lockfile versions")
     except BaseException:
         for path, contents in before.items():
             if contents is None:

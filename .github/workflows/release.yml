@@ -3,13 +3,16 @@ on:
   workflow_dispatch:
     inputs:
       bump:
-        description: Version increment (used when starting from main)
+        description: Version increment for the release PR
         type: choice
         required: true
         default: patch
         options: [patch, minor, major]
   push:
     tags: ['v*']
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
 permissions:
   contents: read
 concurrency:
@@ -19,6 +22,7 @@ jobs:
   prepare:
     if: github.event_name == 'workflow_dispatch' && github.ref_type == 'branch'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: write
       pull-requests: write
@@ -41,6 +45,12 @@ jobs:
           version: '0.13.6'
           python-version: '3.14'
       - run: uv sync --locked --all-extras
+      - name: Require outstanding release PRs to be resolved
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: uv run --locked python .github/scripts/release.py check-pending
       - name: Bump project version and lockfile
         id: version
         env:
@@ -52,63 +62,63 @@ jobs:
       - run: uv build
       - run: uvx --from 'twine>=6.2' twine check --strict dist/*
       - run: uv run python .github/scripts/verify_dist.py
-      - name: Commit the version bump on a release branch and open its PR
+      - name: Open the validated version PR and start CI
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-          RELEASE_TAG: ${{ steps.version.outputs.tag }}
-        run: |
-          RELEASE_BRANCH="release/$RELEASE_TAG-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
-          git switch -c "$RELEASE_BRANCH"
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add pyproject.toml uv.lock
-          git commit -m "Bump version to $RELEASE_TAG"
-          git push origin "HEAD:refs/heads/$RELEASE_BRANCH"
-          cat > "$RUNNER_TEMP/version-pr.md" <<'BODY'
-          Record the automatically validated release version in pyproject.toml and uv.lock.
-
-          The release tag points to this commit. Merge this PR to keep the default branch's version metadata current.
-          BODY
-          gh pr create --base "$DEFAULT_BRANCH" --head "$RELEASE_BRANCH" \
-            --title "Bump version to $RELEASE_TAG" --body-file "$RUNNER_TEMP/version-pr.md"
-      - name: Tag validated code and start publishing on the tag
+        run: uv run --locked python .github/scripts/release.py open-pr
+  tag:
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == github.event.repository.default_branch &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.6'
+          python-version: '3.14'
+      - name: Tag only merged code that passed CI, then dispatch publishing
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ steps.version.outputs.tag }}
-          RELEASE_BUMP: ${{ inputs.bump }}
-        run: |
-          git tag -a "$RELEASE_TAG" -m "Release $RELEASE_TAG"
-          git push origin "refs/tags/$RELEASE_TAG"
-          # GITHUB_TOKEN tag pushes do not trigger push workflows; explicit dispatch does.
-          # Running on the tag also preserves the pypi environment's v* tag restriction.
-          gh workflow run release.yml --ref "$RELEASE_TAG" --field "bump=$RELEASE_BUMP"
-          printf '### Release prepared\n\nPublishing dispatched for %s.\n' "$RELEASE_TAG" >> "$GITHUB_STEP_SUMMARY"
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: uv run --locked --no-dev python .github/scripts/release.py tag
   build:
     if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: '0.13.6'
           python-version: '3.14'
       - run: uv sync --locked --all-extras
-      - name: Verify release tag
+      - name: Require a matching version tag on merged default-branch code
         env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          uv run python - <<'PY'
-          import os, re, tomllib
-          from pathlib import Path
-          version = tomllib.loads(Path('pyproject.toml').read_text())['project']['version']
-          if not re.fullmatch(r'(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)', version):
-              raise SystemExit('Automated releases require a stable X.Y.Z version')
-          if os.environ['RELEASE_TAG'] != f'v{version}':
-              raise SystemExit('Release tag must match project.version')
-          PY
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: uv run --locked python .github/scripts/release.py verify
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run pytest
@@ -123,6 +133,7 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     environment:
       name: pypi
       url: https://pypi.org/p/update-dependencies
@@ -137,6 +148,7 @@ jobs:
   release:
     needs: [build, publish]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: write
     steps:

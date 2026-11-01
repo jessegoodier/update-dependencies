@@ -66,7 +66,9 @@ uv sync --locked --all-extras
 uv run pytest
 uv run ruff check .
 uv run ruff format --check .
+go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
 uv build
+uv run python .github/scripts/verify_dist.py
 ```
 
 `scripts/update_dependencies.py` is a compatibility launcher for an installed
@@ -75,6 +77,7 @@ The old root filename was moved to avoid shadowing the installed Python package.
 
 Start a release from **Actions → Release → Run workflow** on the default branch.
 Choose **patch** (default), **minor**, or **major**. After validation, automation
-creates the version-bump PR and tag, publishes through the protected `pypi`
-environment, then creates the GitHub release. See [release setup](docs/releasing.md)
+opens a version PR. After you merge it and default-branch CI passes, automation
+tags the tested merged commit, publishes through the protected `pypi` environment,
+then creates the GitHub release. See [release setup](docs/releasing.md)
 for GitHub permissions, approval, and retry steps.

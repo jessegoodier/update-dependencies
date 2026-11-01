@@ -76,10 +76,37 @@ def test_plain_config_has_an_explicit_cli_override(tmp_path):
     assert config.plain is False
 
 
-def test_output_style_is_reset_after_failure():
+def test_output_style_is_reset_after_failure(monkeypatch):
+    monkeypatch.setenv("FORCE_COLOR", "1")
+    monkeypatch.setenv("TERM", "xterm-256color")
     with pytest.raises(ValueError, match="test"), output_style(True):
         assert diagnostics().color_system is None
         raise ValueError("test")
     # A subsequent invocation receives its own console; plain is not a global mutation.
     with output_style(False):
-        assert diagnostics() is not None
+        assert diagnostics().color_system is not None
+
+
+def test_nested_output_styles_restore_outer_invocation(monkeypatch):
+    monkeypatch.setenv("FORCE_COLOR", "1")
+    monkeypatch.setenv("TERM", "xterm-256color")
+    with output_style(True):
+        assert diagnostics().color_system is None
+        with output_style(False):
+            assert diagnostics().color_system is not None
+        assert diagnostics().color_system is None
+
+
+def test_rich_diagnostics_do_not_corrupt_json_stdout(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("FORCE_COLOR", "1")
+
+    def fake_run(*args, **kwargs):
+        diagnostics().print("[yellow]Registry warning[/]")
+        return sample_report()
+
+    monkeypatch.setattr(cli, "run", fake_run)
+    assert main(["--directory", str(tmp_path), "--format", "json", "--progress", "off"]) == 0
+    captured = capsys.readouterr()
+    assert json.loads(captured.out)["changed_files"] == ["pyproject.toml"]
+    assert "\x1b" not in captured.out
+    assert "Registry warning" in captured.err

@@ -4,7 +4,8 @@
 
 - Restore Rich CLI colors/tables and add --plain; default Action logs to plain.
 - Add a manual release dropdown with patch/minor/major increments and a patch default.
-- Validate bumped versions, open metadata PRs, tag commits, and create releases after publication.
+- Require the version PR to merge and default-branch CI to pass before tagging or publishing.
+- Guard releases against mismatched lockfiles, unmerged tags, duplicate PRs, and repeated publication.
 
 ## 0.1.0
 

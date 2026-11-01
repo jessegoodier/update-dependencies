@@ -42,8 +42,8 @@ jobs:
 
 The first versioned reference becomes available after release. Prefer a full
 release commit SHA for production. The repository's own scheduled workflow uses
-its checked-out action and uploads a preview report. GitHub Actions publishing
-and PyPI publishing are separate: this action can run directly from a repository
+its checked-out action to validate dependency updates and open a PR. GitHub Actions
+publishing and PyPI publishing are separate: this action can run directly from a repository
 commit even before the first PyPI release.
 
 The Action defaults to `plain: 'true'` for colorless logs without tables or live
@@ -96,9 +96,10 @@ Create the `pypi` GitHub environment, and configure PyPI Trusted Publishing with
 
 Use **Actions → Release → Run workflow**, select the default branch, and choose
 `patch` (default), `minor`, or `major`. The workflow updates the version and lockfile,
-validates them, creates a release branch and metadata PR, then tags the validated
-commit. It explicitly dispatches publishing on that tag, retaining the protected
-`pypi` environment. The GitHub release is created after publishing succeeds.
+validates them, and opens a version PR. Only after the PR is merged and CI passes
+on the default-branch commit does automation tag that tested merged commit and
+dispatch publishing, retaining the protected `pypi` environment. The GitHub release
+is created after publishing succeeds.
 
 See [release automation](releasing.md) for repository permissions, version PRs,
 manual tags, and retry instructions. The existing PyPI trusted publisher continues

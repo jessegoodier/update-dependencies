@@ -70,7 +70,7 @@ def test_release_workflow_defaults_to_patch_and_preserves_oidc_boundary():
     workflow = yaml.load((root / ".github/workflows/release.yml").read_text(), Loader=yaml.BaseLoader)
     bump = workflow["on"]["workflow_dispatch"]["inputs"]["bump"]
     assert bump == {
-        "description": "Version increment (used when starting from main)",
+        "description": "Version increment for the release PR",
         "type": "choice",
         "required": "true",
         "default": "patch",
@@ -82,9 +82,26 @@ def test_release_workflow_defaults_to_patch_and_preserves_oidc_boundary():
     assert workflow["jobs"]["release"]["needs"] == ["build", "publish"]
     prepare_steps = workflow["jobs"]["prepare"]["steps"]
     commands = "\n".join(step.get("run", "") for step in prepare_steps)
-    assert "gh workflow run release.yml --ref" in commands
-    assert commands.index("uv run pytest") < commands.index("git tag -a")
-    assert "--force" not in commands
+    assert "release.py open-pr" in commands
+    assert "git tag" not in commands
+    assert "release.py tag" not in commands
+    assert "release.yml --ref" not in commands
+    tag = workflow["jobs"]["tag"]
+    for condition in (
+        "github.event_name == 'workflow_run'",
+        "github.event.workflow_run.conclusion == 'success'",
+        "github.event.workflow_run.event == 'push'",
+        "github.event.workflow_run.head_branch == github.event.repository.default_branch",
+        "github.event.workflow_run.head_repository.full_name == github.repository",
+    ):
+        assert condition in tag["if"]
+    assert tag["steps"][0]["with"]["ref"] == "${{ github.event.workflow_run.head_sha }}"
+    assert workflow["on"]["workflow_run"] == {"workflows": ["CI"], "types": ["completed"]}
+    assert workflow["jobs"]["build"]["permissions"] == {"contents": "read", "actions": "read"}
+    build_commands = "\n".join(step.get("run", "") for step in workflow["jobs"]["build"]["steps"])
+    assert "release.py verify" in build_commands
+    assert workflow["jobs"]["publish"]["needs"] == "build"
+    assert all("timeout-minutes" in job for job in workflow["jobs"].values())
 
 
 def test_real_uv_bump_updates_lock_without_sync(tmp_path, monkeypatch):
@@ -104,3 +121,23 @@ def test_real_uv_bump_updates_lock_without_sync(tmp_path, monkeypatch):
     packages = tomllib.loads((tmp_path / "uv.lock").read_text())["package"]
     assert next(package for package in packages if package["name"] == "release-fixture")["version"] == "0.2.0"
     assert not (tmp_path / ".venv").exists()
+
+
+def test_successful_uv_command_with_stale_lock_is_rolled_back(tmp_path, monkeypatch):
+    project = tmp_path / "pyproject.toml"
+    lock = tmp_path / "uv.lock"
+    original = '[project]\nname = "demo"\nversion = "0.1.0"\n'
+    original_lock = 'version = 1\n[[package]]\nname = "demo"\nversion = "0.1.0"\n'
+    project.write_text(original)
+    lock.write_text(original_lock)
+
+    def fake_run(command, **kwargs):
+        if command[0] != "git":
+            project.write_text(original.replace("0.1.0", "0.1.1"))
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    with pytest.raises(ValueError, match="inconsistent"):
+        release["prepare"](tmp_path, "patch")
+    assert project.read_text() == original
+    assert lock.read_text() == original_lock

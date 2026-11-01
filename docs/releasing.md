@@ -1,94 +1,97 @@
 # Automated releases
 
-Once this workflow change is merged, open **Actions → Release → Run workflow** on
-`main` (or the repository's current default branch). Choose a version increment:
+Start **Actions → Release → Run workflow** on the default branch. Choose `patch`
+(default), `minor`, or `major`. This prepares a version PR; it does not create a
+tag, publish a package, or create a GitHub release.
 
-| Choice | Example from 0.1.0 |
-| --- | --- |
-| patch (default) | 0.1.1 |
-| minor | 0.2.0 |
-| major | 1.0.0 |
+## Release sequence
 
-The workflow uses the greater of the manifest version and existing stable `vX.Y.Z`
-tags as its starting version. This avoids reusing a version if an earlier metadata
-PR has not yet been merged. Prerelease tags are ignored; automated bumps require a
-stable three-part project version.
+1. Preparation refuses to start while another `release/v*` PR is open. Resolve
+   that PR first. The next version is based on the greater of `project.version`
+   and existing stable `vX.Y.Z` tags; prerelease tags are ignored.
+2. The version helper updates `pyproject.toml` and `uv.lock` together. Inconsistent
+   versions or a failed update restore both files. Lint, formatting, tests,
+   builds, strict Twine checks, and distribution installation checks must pass.
+3. Automation commits only the manifest and lockfile on a unique release branch,
+   opens a PR, and explicitly dispatches full CI for that branch. Review and
+   merge the version PR. Closing it without merging cancels the proposed release.
+4. **After merge**, CI runs on the default branch. Only successful push-triggered
+   CI on the exact merged commit can start tagging. Failed, cancelled, manual,
+   fork, and PR CI runs cannot start a release.
+5. The release helper verifies default-branch ancestry and matching manifest and
+   lockfile versions, then creates an annotated `vX.Y.Z` tag on the tested merged
+   commit. It never moves an existing tag. Already-tagged versions are a no-op.
+6. Publishing is explicitly dispatched on that tag. The tagged build checks the
+   version, tag target, default-branch ancestry, and successful default-branch CI
+   again before rebuilding and testing the immutable source.
+7. The protected `pypi` environment requires deployment approval. After approval
+   and successful PyPI publication, automation creates the GitHub release with
+   generated notes. Existing GitHub releases are left unchanged.
 
-## One-time permissions
+The tag is created only after merge and successful CI. The GitHub release is
+created only after publication. An unrelated commit with an already-released
+version does not start another release. If a version merge fails CI, a subsequent
+fix on the default branch can release that same version after its own CI passes.
 
-1. Keep the existing PyPI Trusted Publisher for GitHub owner `jessegoodier`, repo
-   `update-dependencies`, workflow `release.yml`, and environment `pypi`.
-2. Keep the `pypi` environment's `v*` **tag** restriction and required reviewer.
-3. In **Settings → Actions → General → Workflow permissions**, enable **Allow
-   GitHub Actions to create and approve pull requests**. The workflow creates
-   version PRs; it does not approve or merge them.
-4. The workflow declares the narrow permissions each job needs. Preparation needs
-   `contents: write`, `pull-requests: write`, and `actions: write`. Publishing alone
-   receives `id-token: write`. GitHub release creation alone receives
-   `contents: write`. Build/test jobs remain read-only.
-5. If tag rulesets restrict creation of `v*` tags, permit the release automation's
-   actor through the appropriate narrowly scoped rule/bypass, or creation will be
-   rejected. Do not disable general main-branch protection for releases.
+## Permissions and setup
 
-No new permanent token is required. Organization policies can impose stricter
-restrictions; those must permit this repository's release automation.
+- Keep the PyPI Trusted Publisher for owner `jessegoodier`, repository
+  `update-dependencies`, workflow `release.yml`, and environment `pypi`.
+- Keep the `pypi` environment's `v*` tag restriction and required reviewer.
+- Keep **Allow GitHub Actions to create and approve pull requests** enabled.
+  Automation creates version PRs; it does not approve or merge them.
+- Preparation requests contents/PR/actions write access. Tagging requests contents
+  and actions write access. Tagged builds request contents/actions read access.
+  Only publishing receives `id-token: write`; only GitHub release creation
+  receives its own contents write permission. No permanent PyPI token is needed.
+- If tag rulesets restrict `v*` creation, narrowly permit the release actor. Keep
+  default-branch protections in place.
 
-## What happens
+Token-created PRs can require approval for their PR-event CI. Explicitly dispatched
+CI runs separately, but required PR checks may still need **Approve workflows to
+run** before the PR can merge. Preparation and tagging share default-branch
+concurrency without cancelling active runs. Finish one release before starting
+another; GitHub may replace an older pending run in the same concurrency group.
 
-1. The preparation run verifies that it was started from the default branch.
-2. `.github/scripts/bump_version.py` selects the next version and uses
-   `uv version VERSION --no-sync` to update `pyproject.toml` and `uv.lock` together.
-3. Lint, formatting, pytest, builds, strict Twine checks, and clean wheel/sdist
-   installations must pass before a tag is created.
-4. Automation commits the version bump on a unique `release/vX.Y.Z-RUN-ATTEMPT`
-   branch and opens a PR to record it in the default branch. This respects the
-   repository's rule against direct main pushes. The PR is not automatically merged.
-5. It creates the annotated version tag on that tested commit and explicitly
-   dispatches **Release** on the tag. You will see a second workflow run.
-6. That tagged run verifies tag/version equality and rebuilds/tests the immutable
-   tagged source. The `pypi` job then waits for the configured deployment approval.
-7. After approval and successful PyPI publishing, automation creates the GitHub
-   release with generated notes. Existing GitHub releases are left unchanged.
+## Recovery and manual tags
 
-The tag must exist before publishing because the protected `pypi` environment
-only accepts version tags. The GitHub release appears after PyPI succeeds. Version
-bump PRs can require separate approval to start their CI when opened with
-`GITHUB_TOKEN`; review and merge the metadata PR to keep `main` current. If multiple
-version PRs are outstanding, keep the newest version and close stale ones.
+If validation fails before the version PR is opened, fix the cause and prepare
+again. If the PR exists, fix or close it rather than preparing a duplicate. If
+CI on the merged commit fails, fix the code on the default branch; no tag is
+created until CI passes.
 
-Concurrency limits active runs for the same ref without canceling a running
-release. Avoid submitting multiple bumps while one is pending: GitHub can replace
-an older pending run in the same concurrency group. No tags or branches are
-force-pushed. A failed validation creates neither a tag nor a release;
-a later failure can leave a release branch/PR or an unpublished tag for recovery.
-
-## Retrying and manual tags
-
-If preparation failed before creating a tag, fix the cause and run it again.
-If a tag already exists, retry its publishing run rather than requesting another
-bump. From a machine authenticated with GitHub CLI:
+If tagging fails before the tag is pushed, rerun the failed tag job. If the tag
+exists but dispatching or publishing failed, retry publishing on the same tag:
 
 ```sh
 gh workflow run release.yml --ref v0.1.1 --repo jessegoodier/update-dependencies
 ```
 
-Dispatching on an existing tag skips bumping. The dropdown value is used only for
-branch-based preparation. Existing user-pushed `v*` tags continue to trigger the
-publishing path automatically. Tags must match `project.version` exactly.
+The bump dropdown is ignored when dispatching on a tag. Automatic CI reruns do
+not redispatch an existing tag. A manually pushed tag also takes the publishing
+path and must identify a merged default-branch commit with matching metadata and
+successful push CI. A tag for an unmerged version branch is rejected.
 
-A GitHub Actions `GITHUB_TOKEN` tag push does not trigger another push workflow.
-The explicit workflow dispatch avoids that limitation and preserves the tag-based
-OIDC environment identity. See [GitHub's trigger rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
+For a repository without a stable release tag, automatic tagging requires a
+version increase on the tested commit; an unchanged existing version is not
+published merely by installing this workflow. This repository already has its
+`v0.1.0` baseline.
 
-If publishing succeeds but GitHub release creation fails, rerun only the failed
-GitHub release job; do not republish the same distributions. Investigate partial
-uploads before retrying a failed publish. Published PyPI files cannot be replaced.
+If PyPI succeeds but GitHub release creation fails, rerun only the failed release
+job. Do not republish the same distributions. Investigate partial uploads before
+retrying a failed publish: published PyPI files cannot be replaced. A failure
+between steps can leave a PR, branch, or unpublished tag for recovery; automation
+does not force-push or delete them.
 
-To preview version selection locally without changing files:
+Preview version selection locally without modifying files:
 
 ```sh
 uv run python .github/scripts/bump_version.py --dry-run --bump patch
 ```
 
-Omitting `--dry-run` updates the local manifest and lockfile only. The helper never
-commits, pushes, tags, or publishes; those operations are owned by the workflow.
+Without `--dry-run`, this helper updates local metadata only. Committing, pushing,
+tagging, and publishing are separate operations in the workflow.
+
+Trigger behavior and `workflow_run` event handling were checked against the
+[current GitHub documentation](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow)
+and [event reference](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows).
