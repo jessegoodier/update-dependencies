@@ -1,0 +1,71 @@
+CHANGELOG.md
+  s_ef4f28a7a606f7::t_cd22a4eb4f3b30 3-8
+README.md
+  s_ef4f28a7a606f7::t_cd22a4eb4f3b30 25-28,76-80
+tests/test_release.py
+  s_ef4f28a7a606f7::t_0e76bd82d47b10 22,32,54-55,62,88-106
+  s_ef4f28a7a606f7::t_e6aa56498b7529 66-87
+  s_ef4f28a7a606f7::t_b4893ff90a2ea5 1-21,23-31,33-53,56-61,63-65
+docs/configuration.md
+  s_ef4f28a7a606f7::t_cd22a4eb4f3b30 26,61,71-76
+  s_ef4f28a7a606f7::t_75c02e668ae458 77
+pyproject.toml
+  s_ef4f28a7a606f7::t_0e76bd82d47b10 45-48
+docs/github-action.md
+  s_ef4f28a7a606f7::t_0e76bd82d47b10 75-76
+  s_ef4f28a7a606f7::t_cd22a4eb4f3b30 38,49-51,53-54,97-105
+src/update_dependencies/reporting.py
+  s_ef4f28a7a606f7::t_33010a0332c3ab 48-60,62,64-65,70,74-97
+  s_ef4f28a7a606f7::t_cd22a4eb4f3b30 61,63,66-69,71-73
+src/update_dependencies/cli.py
+  s_ef4f28a7a606f7::t_33010a0332c3ab 11,14,44,191-227
+action.yml
+  s_ef4f28a7a606f7::t_33010a0332c3ab 8-11,140,171
+.github/workflows/release.yml
+  s_ef4f28a7a606f7::t_cd22a4eb4f3b30 88
+  s_ef4f28a7a606f7::t_e6aa56498b7529 3-10,15-17,19-87,90,104,107-108,137-153
+src/update_dependencies/ecosystems/actions.py
+  s_ef4f28a7a606f7::t_33010a0332c3ab 47,111,139
+src/update_dependencies/display.py
+  s_ef4f28a7a606f7::t_33010a0332c3ab 1-32
+src/update_dependencies/progress.py
+  s_ef4f28a7a606f7::t_33010a0332c3ab 11-12,39,67,70-83
+  s_ef4f28a7a606f7::t_0e76bd82d47b10 68-69
+docs/releasing.md
+  s_ef4f28a7a606f7::t_cd22a4eb4f3b30 1-58,63-94
+  s_ef4f28a7a606f7::t_3654326156938b 59-62
+src/update_dependencies/config.py
+  s_ef4f28a7a606f7::t_33010a0332c3ab 24
+tests/test_configuration.py
+  s_ef4f28a7a606f7::t_33010a0332c3ab 80
+.github/workflows/update-dependencies.yml
+  s_ef4f28a7a606f7::t_33010a0332c3ab 20
+.github/workflows/ci.yml
+  s_ef4f28a7a606f7::t_33010a0332c3ab 41
+src/update_dependencies/engine.py
+  s_ef4f28a7a606f7::t_33010a0332c3ab 25,433,446,482,520,539,652,657,1085-1087,1092,1152
+src/update_dependencies/action.py
+  s_ef4f28a7a606f7::t_33010a0332c3ab 10,39-43
+.github/scripts/verify_dist.py
+  s_ef4f28a7a606f7::t_3654326156938b 47
+.github/scripts/bump_version.py
+  s_ef4f28a7a606f7::t_b0294dee50143e 1-76
+tests/test_display.py
+  s_ef4f28a7a606f7::t_5250dc4ebc1981 1-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d752bcea0fae8b0d295689f111d56dbe418e9665",
+  "prompts": {},
+  "sessions": {
+    "s_ef4f28a7a606f7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a18965-990b-71b1-a1a0-3c46c649d3e3",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
