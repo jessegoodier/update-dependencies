@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "update-dependencies"
-version = "0.1.0"
+version = "0.1.2"
 description = "Update Python dependencies, GitHub Actions, Docker digests, and pre-commit hooks."
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
