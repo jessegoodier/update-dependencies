@@ -1,0 +1,57 @@
+docs/releasing.md
+  s_6b25f7d2451ec4::t_d9db4e960b1ad8 3-64,70-73,75-78,80-84,86,92-97
+README.md
+  s_6b25f7d2451ec4::t_2bdc388da1ab02 69,71
+  s_6b25f7d2451ec4::t_d9db4e960b1ad8 80-82
+.github/scripts/release.py
+  s_6b25f7d2451ec4::t_73338fe8528985 36-38,42-46,51-70,111-126,147-161
+  s_6b25f7d2451ec4::t_a3d181e0c3b3a8 1-35,39-41,47-48,77-110,127-146,162-174,176-198,200-203
+  s_6b25f7d2451ec4::t_42fb6605782e5b 71-73
+  s_6b25f7d2451ec4::t_a605f7dc9268b3 49-50,74-76,175,199
+.pre-commit-config.yaml
+  s_6b25f7d2451ec4::t_21bd32778c995d 38
+.github/workflows/ci.yml
+  s_6b25f7d2451ec4::t_50f79fd25a3451 10-16,18,20,38
+.github/workflows/release.yml
+  s_6b25f7d2451ec4::t_302e88cdfb06e0 6,13-15,25,48-53,65,70-92,96-97,101,107-109,115,120-121,136,151
+  s_6b25f7d2451ec4::t_a605f7dc9268b3 102-104,117-118
+.github/scripts/verify_dist.py
+  s_6b25f7d2451ec4::t_7c91a3c14c13ae 60
+  s_6b25f7d2451ec4::t_50f79fd25a3451 3-4,6,17-20,31-33,73-75,77-81
+  s_6b25f7d2451ec4::t_c77a84513fc8d6 21-30
+tests/test_display.py
+  s_6b25f7d2451ec4::t_2bdc388da1ab02 79-80,87-91,93-112
+  s_6b25f7d2451ec4::t_e297178d41b44b 81,92
+tests/test_release_lifecycle.py
+  s_6b25f7d2451ec4::t_d9db4e960b1ad8 56-58
+  s_6b25f7d2451ec4::t_9959b65493a0a8 55,109-110,158-159
+  s_6b25f7d2451ec4::t_42fb6605782e5b 111-114
+  s_6b25f7d2451ec4::t_73338fe8528985 1-54,59-108,115-157,160-233
+CHANGELOG.md
+  s_6b25f7d2451ec4::t_d9db4e960b1ad8 7-8
+.github/scripts/bump_version.py
+  s_6b25f7d2451ec4::t_21bd32778c995d 50-54
+docs/github-action.md
+  s_6b25f7d2451ec4::t_d9db4e960b1ad8 99-100
+  s_6b25f7d2451ec4::t_e297178d41b44b 45-46,101-102
+tests/test_release.py
+  s_6b25f7d2451ec4::t_73338fe8528985 73,85-100,104
+  s_6b25f7d2451ec4::t_42fb6605782e5b 101-103
+  s_6b25f7d2451ec4::t_9959b65493a0a8 124-143
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "03084577c76dcc0a1809cafa47849137f1b44f5b",
+  "prompts": {},
+  "sessions": {
+    "s_6b25f7d2451ec4": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a18db6-5ff8-7063-91b7-6cf3e22892cc",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
