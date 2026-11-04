@@ -1,0 +1,37 @@
+tests/test_release.py
+  s_a91a16b99331d6::t_c7ef52740b50e1 68,73,79-93,95-103
+tests/test_release_lifecycle.py
+  s_a91a16b99331d6::t_94f35f5cb7bada 130
+  s_a91a16b99331d6::t_e7ed960a2ecafe 1,25,27-30,32,36,44,62-64,66-76,80-87,90-96,98,101-104,107-111,113-116,119-126,129,131-135,138,140,142-143,146,156,158-160,162-164,166
+.github/scripts/release.py
+  s_a91a16b99331d6::t_5ed3c3ff4bf0c6 1,41,49-51,54-55,57-61,63-65,70,73-74,80-89,92,97-98
+docs/releasing.md
+  s_a91a16b99331d6::t_387e0a8fca32d8 4-7,11-13,17-34,41-52,56-57,59-64,67-68,71-76,78-80,84-86,94
+README.md
+  s_a91a16b99331d6::t_ca967d682c11fb 81-84
+CHANGELOG.md
+  s_a91a16b99331d6::t_6f0a11898d3f50 7-8
+.github/workflows/release.yml
+  s_a91a16b99331d6::t_1da4b7d358beaf 129
+  s_a91a16b99331d6::t_d4df82a2821792 6,25-26,34,56,59,61-65,87
+  s_a91a16b99331d6::t_e2c2d46af3c428 70-71,73-77,80
+  s_a91a16b99331d6::t_146a5620e366f2 89
+docs/github-action.md
+  s_a91a16b99331d6::t_4e419ee0035b12 99-100,103-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "908bce6aa85415235609dc9eeae1fe7750a21229",
+  "prompts": {},
+  "sessions": {
+    "s_a91a16b99331d6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "629bcbe2-bf3d-4282-ba1c-06b851c3b0a2",
+        "model": "claude-haiku-5-5"
+      },
+      "human_author": "jesse goodier <31039225+jessegoodier@users.noreply.github.com>"
+    }
+  }
+}
