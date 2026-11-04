@@ -65,43 +65,42 @@ def test_dry_run_defaults_to_patch_without_writing_files(tmp_path, monkeypatch, 
     assert project.read_text() == original
 
 
-def test_release_workflow_defaults_to_patch_and_preserves_oidc_boundary():
+def test_release_workflow_publishes_directly_and_gates_only_on_pypi_environment():
     root = Path(__file__).resolve().parents[1]
     workflow = yaml.load((root / ".github/workflows/release.yml").read_text(), Loader=yaml.BaseLoader)
     bump = workflow["on"]["workflow_dispatch"]["inputs"]["bump"]
     assert bump == {
-        "description": "Version increment for the release PR",
+        "description": "Version increment for the release",
         "type": "choice",
         "required": "true",
         "default": "patch",
         "options": ["patch", "minor", "major"],
     }
-    assert "github.ref_type == 'tag'" in workflow["jobs"]["build"]["if"]
-    assert workflow["jobs"]["publish"]["permissions"] == {"id-token": "write"}
-    assert workflow["jobs"]["publish"]["environment"]["name"] == "pypi"
-    assert workflow["jobs"]["release"]["needs"] == ["build", "publish"]
-    prepare_steps = workflow["jobs"]["prepare"]["steps"]
-    commands = "\n".join(step.get("run", "") for step in prepare_steps)
-    assert "release.py open-pr" in commands
-    assert "git tag" not in commands
-    assert "release.py tag" not in commands
-    assert "release.yml --ref" not in commands
-    tag = workflow["jobs"]["tag"]
-    for condition in (
-        "github.event_name == 'workflow_run'",
-        "github.event.workflow_run.conclusion == 'success'",
-        "github.event.workflow_run.event == 'push'",
-        "github.event.workflow_run.head_branch == github.event.repository.default_branch",
-        "github.event.workflow_run.head_repository.full_name == github.repository",
-    ):
-        assert condition in tag["if"]
-    assert tag["steps"][0]["with"]["ref"] == "${{ github.event.workflow_run.head_sha }}"
-    assert workflow["on"]["workflow_run"] == {"workflows": ["CI"], "types": ["completed"]}
-    assert workflow["jobs"]["build"]["permissions"] == {"contents": "read", "actions": "read"}
-    build_commands = "\n".join(step.get("run", "") for step in workflow["jobs"]["build"]["steps"])
+    # Neither a PR gate nor a CI workflow_run gate: the only approval is the pypi environment.
+    assert set(workflow["on"]) == {"workflow_dispatch", "push"}
+    assert workflow["on"]["push"] == {"tags": ["v*"]}
+
+    jobs = workflow["jobs"]
+    assert jobs["prepare"]["permissions"] == {"contents": "write"}
+    prepare_commands = "\n".join(step.get("run", "") for step in jobs["prepare"]["steps"])
+    assert "release.py publish" in prepare_commands
+    assert "open-pr" not in prepare_commands
+    assert "gh pr" not in prepare_commands
+    assert "git tag" not in prepare_commands
+
+    assert jobs["build"]["needs"] == "prepare"
+    assert jobs["build"]["permissions"] == {"contents": "read"}
+    build_commands = "\n".join(step.get("run", "") for step in jobs["build"]["steps"])
     assert "release.py verify" in build_commands
-    assert workflow["jobs"]["publish"]["needs"] == "build"
-    assert all("timeout-minutes" in job for job in workflow["jobs"].values())
+    assert "github.ref_type == 'tag'" in jobs["build"]["if"]
+    assert "needs.prepare.result == 'success'" in jobs["build"]["if"]
+
+    assert jobs["publish"]["needs"] == "build"
+    assert jobs["publish"]["environment"]["name"] == "pypi"
+    assert jobs["publish"]["permissions"] == {"id-token": "write"}
+    assert jobs["release"]["needs"] == ["build", "publish"]
+    assert "needs.build.outputs.tag" in jobs["release"]["steps"][0]["env"]["RELEASE_TAG"]
+    assert all("timeout-minutes" in job for job in jobs.values())
 
 
 def test_real_uv_bump_updates_lock_without_sync(tmp_path, monkeypatch):
