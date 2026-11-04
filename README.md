@@ -78,7 +78,7 @@ The old root filename was moved to avoid shadowing the installed Python package.
 
 Start a release from **Actions → Release → Run workflow** on the default branch.
 Choose **patch** (default), **minor**, or **major**. After validation, automation
-opens a version PR. After you merge it and default-branch CI passes, automation
-tags the tested merged commit, publishes through the protected `pypi` environment,
-then creates the GitHub release. See [release setup](docs/releasing.md)
-for GitHub permissions, approval, and retry steps.
+commits the version to the default branch, tags it, and waits for approval in the
+protected `pypi` environment. After approval, it publishes to PyPI and creates the
+GitHub release. See [release setup](docs/releasing.md) for GitHub permissions,
+approval, and retry steps.

@@ -96,13 +96,12 @@ Create the `pypi` GitHub environment, and configure PyPI Trusted Publishing with
 
 Use **Actions → Release → Run workflow**, select the default branch, and choose
 `patch` (default), `minor`, or `major`. The workflow updates the version and lockfile,
-validates them, and opens a version PR. Only after the PR is merged and CI passes
-on the default-branch commit does automation tag that tested merged commit and
-dispatch publishing, retaining the protected `pypi` environment. The GitHub release
+validates them, commits them to the default branch, and tags that commit. Publishing
+then waits for approval in the protected `pypi` environment. The GitHub release
 is created after publishing succeeds.
 
-See [release automation](releasing.md) for repository permissions, version PRs,
-manual tags, and retry instructions. The existing PyPI trusted publisher continues
+See [release automation](releasing.md) for repository permissions, manual tags,
+and retry instructions. The existing PyPI trusted publisher continues
 to use `release.yml` and environment `pypi`; no additional PyPI token is needed.
 
 Current official references verified during the 2026 migration:

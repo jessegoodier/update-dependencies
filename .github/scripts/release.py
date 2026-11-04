@@ -1,7 +1,6 @@
-"""Open release PRs and allow tags/publishing only for merged, validated code."""
+"""Commit a validated version to the default branch, tag it, and verify it before publishing."""
 
 import argparse
-import json
 import os
 import re
 import subprocess
@@ -39,6 +38,7 @@ def committed_version(root: Path) -> str:
 
 
 def require_merged(root: Path, default_branch: str) -> None:
+    """Reject tags that do not point at code already on the default branch."""
     subprocess.run(
         ["git", "merge-base", "--is-ancestor", "HEAD", f"refs/remotes/origin/{default_branch}"],
         cwd=root,
@@ -46,59 +46,39 @@ def require_merged(root: Path, default_branch: str) -> None:
     )
 
 
-def require_ci(root: Path, default_branch: str) -> None:
-    head = run(root, "git", "rev-parse", "HEAD")
-    runs = json.loads(
-        run(
-            root,
-            "gh",
-            "run",
-            "list",
-            "--workflow",
-            "ci.yml",
-            "--branch",
-            default_branch,
-            "--commit",
-            head,
-            "--event",
-            "push",
-            "--limit",
-            "100",
-            "--json",
-            "headSha,status,conclusion",
-        )
-    )
-    # GitHub lists newest runs first. An older success must not hide a newer failure or pending run.
-    latest = next((r for r in runs if r["headSha"] == head), None)
-    if latest is None or latest["status"] != "completed" or latest["conclusion"] != "success":
-        raise ValueError("CI must pass on this exact default-branch commit before releasing")
+def bot_identity(root: Path) -> None:
+    run(root, "git", "config", "user.name", "github-actions[bot]")
+    run(root, "git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com")
 
 
-def release_tag(root: Path, default_branch: str) -> str | None:
-    """Plan from a tested main commit, including recovery after an earlier CI failure."""
-    require_merged(root, default_branch)
-    version = committed_version(root)
+def publish(root: Path, default_branch: str) -> str:
+    """Commit the prepared manifest and lockfile to the default branch, then tag that commit.
+
+    The branch push is non-fast-forward safe: if the default branch moved since checkout, the
+    push fails and no tag is created. The tag is pushed only after the commit is on the branch.
+    """
+    if run(root, "git", "symbolic-ref", "--short", "HEAD") != default_branch:
+        raise ValueError("Releases can only be committed from the default branch")
+    version = metadata_version((root / "pyproject.toml").read_text(), (root / "uv.lock").read_text())
     tag = f"v{version}"
-    reachable = run(root, "git", "tag", "--merged", "HEAD", "--list", "v*").splitlines()
-    stable = [version_tuple(t[1:]) for t in reachable if VERSION.fullmatch(t[1:])]
-    current = version_tuple(version)
-    if stable:
-        if current < max(stable):
-            raise ValueError("Project version is behind a released version")
-        if current == max(stable):
-            return None
-    else:
-        # Installing the workflow must not publish an existing, unchanged version.
-        previous = tomllib.loads(run(root, "git", "show", "HEAD^:pyproject.toml"))["project"]["version"]
-        if current <= version_tuple(previous):
-            return None
-    all_tags = run(root, "git", "tag", "--list", tag).splitlines()
-    if tag in all_tags:
-        raise ValueError("Release tag already exists outside the merged history; refusing to move it")
+    if run(root, "git", "tag", "--list", tag):
+        raise ValueError(f"Tag {tag} already exists; refusing to reuse a released version")
+    changed = set(filter(None, run(root, "git", "diff", "--name-only", "-z").split("\0")))
+    staged = run(root, "git", "diff", "--cached", "--name-only")
+    untracked = run(root, "git", "ls-files", "--others", "--exclude-standard")
+    if staged or untracked or changed != {"pyproject.toml", "uv.lock"}:
+        raise ValueError("Release commit must contain only manifest and lockfile changes")
+    bot_identity(root)
+    run(root, "git", "add", "--", "pyproject.toml", "uv.lock")
+    run(root, "git", "commit", "-m", f"Release {tag}")
+    run(root, "git", "push", "origin", f"HEAD:refs/heads/{default_branch}")
+    run(root, "git", "tag", "-a", tag, "-m", f"Release {tag}")
+    run(root, "git", "push", "origin", f"refs/tags/{tag}")
     return tag
 
 
 def verify_tag(root: Path, default_branch: str, tag: str) -> None:
+    """Confirm the checked-out tag is a default-branch commit whose metadata matches the tag."""
     require_merged(root, default_branch)
     if tag != f"v{committed_version(root)}":
         raise ValueError("Release tag must match project.version")
@@ -107,96 +87,17 @@ def verify_tag(root: Path, default_branch: str, tag: str) -> None:
         raise ValueError("Release tag must identify the checked-out commit")
 
 
-def check_pending(root: Path, default_branch: str) -> None:
-    prs = json.loads(
-        run(
-            root,
-            "gh",
-            "pr",
-            "list",
-            "--state",
-            "open",
-            "--base",
-            default_branch,
-            "--limit",
-            "1000",
-            "--json",
-            "headRefName,url",
-        )
-    )
-    pending = [p["url"] for p in prs if p["headRefName"].startswith("release/v")]
-    if pending:
-        raise ValueError("Resolve the existing release PR before starting another: " + ", ".join(pending))
-
-
-def open_pr(root: Path, default_branch: str) -> str:
-    check_pending(root, default_branch)
-    version = metadata_version((root / "pyproject.toml").read_text(), (root / "uv.lock").read_text())
-    changed = set(filter(None, run(root, "git", "diff", "--name-only", "-z").split("\0")))
-    staged = run(root, "git", "diff", "--cached", "--name-only")
-    untracked = run(root, "git", "ls-files", "--others", "--exclude-standard")
-    if staged or untracked or changed != {"pyproject.toml", "uv.lock"}:
-        raise ValueError("Release PR must contain only manifest and lockfile changes")
-    branch = f"release/v{version}-{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}"
-    run(root, "git", "check-ref-format", "--branch", branch)
-    run(root, "git", "switch", "-c", branch)
-    bot_identity(root)
-    run(root, "git", "add", "--", "pyproject.toml", "uv.lock")
-    run(root, "git", "commit", "-m", f"Bump version to v{version}")
-    run(root, "git", "push", "origin", branch)
-    url = run(
-        root,
-        "gh",
-        "pr",
-        "create",
-        "--base",
-        default_branch,
-        "--head",
-        branch,
-        "--title",
-        f"Bump version to v{version}",
-        "--body",
-        "Merge this validated version PR to start the release. No tag or package has been published. "
-        "After merge, CI on the default branch must pass before tagging and publishing can start.",
-    )
-    run(root, "gh", "workflow", "run", "ci.yml", "--ref", branch)
-    return url
-
-
-def bot_identity(root: Path) -> None:
-    run(root, "git", "config", "user.name", "github-actions[bot]")
-    run(root, "git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com")
-
-
-def tag_merged(root: Path, default_branch: str) -> str | None:
-    tag = release_tag(root, default_branch)
-    if tag is None:
-        return None
-    require_ci(root, default_branch)
-    bot_identity(root)
-    run(root, "git", "tag", "-a", tag, "-m", f"Release {tag}")
-    run(root, "git", "push", "origin", f"refs/tags/{tag}")
-    # Token-created tag pushes do not trigger push workflows; dispatch the immutable tag.
-    run(root, "gh", "workflow", "run", "release.yml", "--ref", tag)
-    return tag
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("check-pending", "open-pr", "tag", "verify"))
+    parser.add_argument("command", choices=("publish", "verify"))
     args = parser.parse_args()
     root = Path.cwd()
     default_branch = os.environ["DEFAULT_BRANCH"]
     match args.command:
-        case "check-pending":
-            check_pending(root, default_branch)
-        case "open-pr":
-            print(open_pr(root, default_branch))
-        case "tag":
-            print(tag_merged(root, default_branch) or "No unreleased version; no tag created")
+        case "publish":
+            print(publish(root, default_branch))
         case "verify":
             verify_tag(root, default_branch, os.environ["RELEASE_TAG"])
-            require_ci(root, default_branch)
 
 
 if __name__ == "__main__":
