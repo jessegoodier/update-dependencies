@@ -170,6 +170,13 @@ def parse_inline_script_direct() -> set[str]:
 
 
 def relax_spec(spec: str, req: Requirement, *, allow_major: bool = True) -> str:
+    """Convert exact pins for resolve; keep author-declared upper bounds.
+
+    Declared ``<`` caps are never stripped. Marker-scoped exact pins also get a
+    major-line hold so distinct Python markers keep tracking separate lines.
+    ``allow_major`` is accepted for call-site compatibility only.
+    """
+    _ = allow_major
     updated = spec
     for constraint in req.specifier:
         if constraint.operator == "==" and "*" not in constraint.version:
@@ -178,8 +185,6 @@ def relax_spec(spec: str, req: Requirement, *, allow_major: bool = True) -> str:
                 # Distinct pins under Python markers intentionally track different major lines.
                 upper = Version(constraint.version).major + 1
                 updated = updated.replace(f">={constraint.version}", f">={constraint.version},<{upper}", 1)
-        elif allow_major and constraint.operator == "<" and not req.marker:
-            updated = re.sub(r",?\s*<" + re.escape(constraint.version) + r"(?=,|;|$)", "", updated)
     return updated
 
 
@@ -235,10 +240,11 @@ def freeze_opted_out(text: str, locked: Mapping[str, str], *, specs: SpecsFn = d
 
 
 def relax_constraints(text: str, *, allow_major: bool = True, specs: SpecsFn = dependency_specs) -> str:
-    """Let uv resolve exact pins; retain marker-specific major lines and bounds.
+    """Let uv resolve exact pins; retain declared upper bounds and marker lines.
 
-    A requirement whose line, or the comment on the line above, contains
-    NO_AUTO_UPDATE keeps its current specifier.
+    Author-declared upper bounds are always kept. A requirement whose line, or
+    the comment on the line above, contains NO_AUTO_UPDATE keeps its current
+    specifier.
     """
     for start, end, spec, req in reversed(list(specs(text))):
         if has_NO_AUTO_UPDATE(text, start):
@@ -282,17 +288,14 @@ def update_requirement_constraints(
             updated = add_minimum_version(spec, version)
         else:
             for constraint in req.specifier:
-                if constraint.operator in ("==", ">=") and "*" not in constraint.version:
-                    if Version(version) > Version(constraint.version):
-                        updated = updated.replace(
-                            f"{constraint.operator}{constraint.version}",
-                            f"{constraint.operator}{version}",
-                            1,
-                        )
-                elif allow_major and constraint.operator == "<" and Version(version) not in req.specifier:
+                if (
+                    constraint.operator in ("==", ">=")
+                    and "*" not in constraint.version
+                    and Version(version) > Version(constraint.version)
+                ):
                     updated = updated.replace(
-                        f"<{constraint.version}",
-                        f"<{Version(version).major + 1}",
+                        f"{constraint.operator}{constraint.version}",
+                        f"{constraint.operator}{version}",
                         1,
                     )
         if updated != spec:

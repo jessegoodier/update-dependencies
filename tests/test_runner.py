@@ -147,6 +147,48 @@ def test_hold_major_lines_without_existing_upper_bound(spec, locked, upper):
     assert upper in engine.hold_major_lines(text, {"foo": locked}, allow_major=False)
 
 
+def test_relax_constraints_keeps_declared_upper_bounds() -> None:
+    text = """\
+[project]
+name = "demo"
+version = "0.1.0"
+dependencies = ["litellm>=1.106.6,<1.107.0"]
+"""
+    assert "litellm>=1.106.6,<1.107.0" in engine.relax_constraints(text, allow_major=True)
+
+
+def test_write_back_raises_floor_within_declared_upper_bound() -> None:
+    text = """\
+[project]
+name = "demo"
+version = "0.1.0"
+dependencies = ["litellm>=1.106.6,<1.107.0"]
+"""
+    updated, changes = engine.update_requirement_constraints(
+        {"litellm": ["1.106.9", "1.200.0"]},
+        original=text,
+        allow_major=True,
+    )
+    assert '"litellm>=1.106.9,<1.107.0"' in updated
+    assert changes == [("litellm", "litellm>=1.106.6,<1.107.0", "litellm>=1.106.9,<1.107.0")]
+
+
+def test_write_back_leaves_capped_requirement_when_lock_is_outside_range() -> None:
+    text = """\
+[project]
+name = "demo"
+version = "0.1.0"
+dependencies = ["litellm>=1.106.6,<1.107.0"]
+"""
+    updated, changes = engine.update_requirement_constraints(
+        {"litellm": ["1.200.0"]},
+        original=text,
+        allow_major=True,
+    )
+    assert updated == text
+    assert changes == []
+
+
 def test_apply_failure_restores_already_written_files(tmp_path, fake_image, monkeypatch):
     originals = {}
     for name in ("Dockerfile.a", "Dockerfile.b"):

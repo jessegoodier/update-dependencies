@@ -18,9 +18,10 @@ For interactive prompts, install `uv tool install 'update-dependencies[tui]'` an
 run `update-dependencies --tui`.
 
 All ecosystems are selected by default. Major updates remain enabled for
-compatibility; set `allow-major = false` for a conservative policy. `NO_AUTO_UPDATE`
-in a same-line or immediately preceding comment preserves individual exclusions.
-Docker `latest` tags are left alone unless explicitly enabled.
+compatibility; set `allow-major = false` for a conservative policy. Declared
+Python upper bounds are always kept. `NO_AUTO_UPDATE` in a same-line or
+immediately preceding comment preserves individual exclusions. Docker `latest`
+tags are left alone unless explicitly enabled.
 
 Interactive CLI runs use Rich colors and dependency tables. Add `--plain` for
 unstyled logs, or configure `plain = true`. The GitHub Action defaults to plain
