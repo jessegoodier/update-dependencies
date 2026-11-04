@@ -100,13 +100,17 @@ GitHub updates cover `.github/**/*.yml`, `.github/**/*.yaml`, and all root/neste
 `action.yml` and `action.yaml` files. Docker updates refresh digests for existing
 tags, without choosing newer image tags. Hooks use `pre-commit autoupdate --freeze`.
 
-`allow-major = false` holds Python direct dependency major lines using the current
-lock (or a requirement's version floor when no lock exists). For `0.x` dependencies,
-the minor line is held. Bare requirements without a lock cannot be safely held and
-produce an error. Transitive dependencies remain subject to the resolver. Actions
-hold major upgrades and can pin their current ref. Hooks obey the major policy
-when both old and new revisions have version labels; revisions that cannot be
-compared are held when major updates are disabled. Docker digests retain tags.
+Author-declared Python upper bounds (for example `litellm>=1.106.6,<1.107.0`) are
+always respected: floors may rise within that range, but the cap is not stripped or
+rewritten. `allow-major = false` additionally holds Python direct dependency major
+lines using the current lock (or a requirement's version floor when no lock exists).
+For `0.x` dependencies, the minor line is held. Bare requirements without a lock
+cannot be safely held and produce an error. With `allow-major = true` (the default),
+packages without an upper bound may still cross majors. Transitive dependencies
+remain subject to the resolver. Actions hold major upgrades and can pin their
+current ref. Hooks obey the major policy when both old and new revisions have
+version labels; revisions that cannot be compared are held when major updates are
+disabled. Docker digests retain tags.
 
 Cooldowns apply to GitHub Action releases, uv Python resolution, PEP 723 resolution,
 and explicit uv_build updates. Docker digests and pre-commit revisions do not have
